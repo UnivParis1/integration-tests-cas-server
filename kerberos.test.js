@@ -5,9 +5,9 @@ const fs = require('fs')
 
 beforeAll(cas.kinit)
 
-test.concurrent('the_different_ticket_validate with kerberos', async () => {
-    await test_the_different_ticket_validations.tests(cas.get_ticket_using_kerberos)
-})
+test.concurrent('no attrs serviceValidate with kerberos', () => test_the_different_ticket_validations.p2(cas.get_ticket_using_kerberos))
+test.concurrent('p3/serviceValidate with kerberos', () => test_the_different_ticket_validations.p3(cas.get_ticket_using_kerberos))
+test.concurrent('samlValidate with kerberos', () => test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_kerberos))
 
 test.concurrent('no_kerberos_for_userAgents', async () => {
     const headers_and_html = await cas.login_using_kerberos(conf.test_services.p2, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36")

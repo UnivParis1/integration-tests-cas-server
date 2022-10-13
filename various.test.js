@@ -42,9 +42,9 @@ test.concurrent('single_logout', async () => {
     expect(logoutRequest).toContain(`<saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${conf.user.login}</saml:NameID>`)
 }, 2000)
 
-test.concurrent('the_different_ticket_validate with FORM post', async () => {
-    await test_the_different_ticket_validations.tests(cas.get_ticket_using_form_post)
-})
+test.concurrent('no attrs serviceValidate with FORM post', () => test_the_different_ticket_validations.p2(cas.get_ticket_using_form_post))
+test.concurrent('p3/serviceValidate with FORM post', () => test_the_different_ticket_validations.p3(cas.get_ticket_using_form_post))
+test.concurrent('samlValidate with FORM post', () => test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_form_post))
 
 async function test_proxy_ticket(service, targetService) {
     const pgt = await cas.get_pgt(service, conf.user)
@@ -56,8 +56,8 @@ async function test_proxy_ticket(service, targetService) {
     const xml_ = await (await fetch(`${conf.cas_base_url}/proxyValidate?service=${encodeURIComponent(targetService)}&ticket=${pticket}`)).text()
     expect(xml_).toContain(`<cas:proxy>${conf.backChannelServer.frontalUrl}//pgtCallback</cas:proxy>`)
     expect(xml_).toContain(`<cas:user>${conf.user.login}</cas:user>`)
-    expect(xml_).toContain(`<cas:uid>${conf.user.login}</cas:uid>`)
-    expect(xml_).toContain(`<cas:mail>${conf.user.mail}</cas:mail>`)
+    expect(xml_).not.toContain(`<cas:uid>${conf.user.login}</cas:uid>`)
+    expect(xml_).not.toContain(`<cas:mail>${conf.user.mail}</cas:mail>`)
 }
 test.concurrent('proxy ticket', async () => {
     backChannelServer.start_if_not_running()
