@@ -1,11 +1,11 @@
 module.exports = {
-    cas_base_url: 'https://cas-test.univ.fr/cas',
+    cas_base_url: 'https://cas.univ.fr/cas',
 
     test_services: {
-        p2: 'https://ent.univ.fr/',
-        p3: 'https://env.univ.fr/',
-        samlValidate: 'https://ent.univ.fr/',
-        proxy: ['https://courrier.univ.fr', 'imap://localhost'],
+        p2: 'http://localhost/',
+        p3: 'http://localhost/',
+        samlValidate: 'http://localhost/',
+        proxy: ['http://localhost/', 'imap://localhost'],
     },
 
     user: {
