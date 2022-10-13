@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "checkJs": true,
+        "allowJs": true,
+        "noEmit": true,
+        "types": ["jest"],
+        "lib": ["ES2022", "dom"]
+
+    }
+}
