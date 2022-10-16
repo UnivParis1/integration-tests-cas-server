@@ -1,6 +1,8 @@
 module.exports = {
     cas_base_url: 'https://cas.univ.fr/cas',
 
+    features: ['proxy', 'single_logout', 'samlValidate'],
+
     test_services: {
         p2: 'http://localhost/',
         p3: 'http://localhost/',

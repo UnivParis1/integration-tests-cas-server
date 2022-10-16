@@ -27,6 +27,7 @@ test.concurrent('login_with_mail', async () => {
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 })
 
+if (conf.features.includes('single_logout'))
 test.concurrent('single_logout', async () => {
     const service = `${conf.backChannelServer.frontalUrl}/app1`
     const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
@@ -44,6 +45,7 @@ test.concurrent('single_logout', async () => {
 
 test.concurrent('no attrs serviceValidate with FORM post', () => test_the_different_ticket_validations.p2(cas.get_ticket_using_form_post))
 test.concurrent('p3/serviceValidate with FORM post', () => test_the_different_ticket_validations.p3(cas.get_ticket_using_form_post))
+if (conf.features.includes('samlValidate'))
 test.concurrent('samlValidate with FORM post', () => test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_form_post))
 
 async function test_proxy_ticket(service, targetService) {
@@ -59,6 +61,8 @@ async function test_proxy_ticket(service, targetService) {
     expect(xml_).not.toContain(`<cas:uid>${conf.user.login}</cas:uid>`)
     expect(xml_).not.toContain(`<cas:mail>${conf.user.mail}</cas:mail>`)
 }
+
+if (conf.features.includes('proxy'))
 test.concurrent('proxy ticket', async () => {
     backChannelServer.start_if_not_running()
     await test_proxy_ticket(...conf.test_services.proxy)

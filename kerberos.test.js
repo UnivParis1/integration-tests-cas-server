@@ -7,6 +7,7 @@ beforeAll(cas.kinit)
 
 test.concurrent('no attrs serviceValidate with kerberos', () => test_the_different_ticket_validations.p2(cas.get_ticket_using_kerberos))
 test.concurrent('p3/serviceValidate with kerberos', () => test_the_different_ticket_validations.p3(cas.get_ticket_using_kerberos))
+if (conf.features.includes('samlValidate'))
 test.concurrent('samlValidate with kerberos', () => test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_kerberos))
 
 test.concurrent('no_kerberos_for_userAgents', async () => {
