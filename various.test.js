@@ -2,24 +2,26 @@ const backChannelServer = require('./backChannelServer');
 const test_the_different_ticket_validations = require('./test_the_different_ticket_validations');
 const cas = require('./cas');
 const conf = require('./conf');
+const undici = require('undici')
+const { navigate } = require('./ua')
 
 test.concurrent('actuator_ip_protected', async () => {
-    const response = await fetch(`${conf.cas_base_url}/actuator`)
-    expect(response.status).toBe(403)
+    const response = await undici.request(`${conf.cas_base_url}/actuator`)
+    expect(response.statusCode).toBe(403)
 })
 
 test.concurrent('login_page', async () => {
     const url = `${conf.cas_base_url}/login?service=${encodeURIComponent(conf.test_services.p2)}`
-    const html = await (await fetch(url, { headers: { 'accept-language': 'fr' }})).text()
-    expect(html).toContain('<span>Connexion Paris 1</span>')
-    expect(html).toContain('<span>Connexion via FranceConnect : </span>')
+    const resp = await navigate({}, url, { headers: { 'accept-language': 'fr' }})
+    expect(resp.body).toContain('<span>Connexion Paris 1</span>')
+    expect(resp.body).toContain('<span>Connexion via FranceConnect : </span>')
 })
 
 test.concurrent('logout redirect', async () => {
     const url = `${conf.cas_base_url}/logout?service=${encodeURIComponent(conf.test_services.p2)}`
-    const response = await fetch(url, { redirect: 'manual' })
-    expect(response.status).toBe(302)
-    expect(response.headers.get('location')).toBe('https://idp-test.univ-paris1.fr/idp/profile/Logout')
+    const response = await undici.request(url)
+    expect(response.statusCode).toBe(302)
+    expect(response.headers.location).toBe('https://idp-test.univ-paris1.fr/idp/profile/Logout')
 })
 
 test.concurrent('login_with_mail', async () => {
@@ -33,16 +35,14 @@ test.concurrent('logout removes TGC', async () => {
     const xml = await cas.p2_serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
-    await fetch(`${conf.cas_base_url}/logout`, {
+    await undici.request(`${conf.cas_base_url}/logout`, {
         headers: { Cookie: `TGC=${tgc}` },
-        redirect: 'manual',
     })
 
-    const response = await fetch(`${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`, {
+    const response = await undici.request(`${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`, {
         headers: { Cookie: `TGC=${tgc}` },
-        redirect: 'manual',
     })
-    expect(response.status).toBe(200)
+    expect(response.statusCode).toBe(200)
 })
 
 if (conf.features.includes('single_logout'))
@@ -53,9 +53,8 @@ test.concurrent('single_logout', async () => {
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     backChannelServer.start_if_not_running()
-    await fetch(`${conf.cas_base_url}/logout`, {
+    await undici.request(`${conf.cas_base_url}/logout`, {
         headers: { Cookie: `TGC=${tgc}` },
-        redirect: 'manual',
     })
     const logoutRequest = await backChannelServer.expectSingleLogoutRequest(ticket, 1/*seconds*/ * 1000)
     expect(logoutRequest).toContain(`<saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${conf.user.login}</saml:NameID>`)
@@ -69,11 +68,11 @@ test.concurrent('samlValidate with FORM post', () => test_the_different_ticket_v
 async function test_proxy_ticket(service, targetService) {
     const pgt = await cas.get_pgt(service, conf.user)
 
-    const xml = await (await fetch(`${conf.cas_base_url}/proxy?targetService=${encodeURIComponent(targetService)}&pgt=${pgt}`)).text()
+    const xml = (await navigate({}, `${conf.cas_base_url}/proxy?targetService=${encodeURIComponent(targetService)}&pgt=${pgt}`)).body
     const pticket = xml.match(/<cas:proxyTicket>([^<]*)/)?.[1]
     if (!pticket) throw "missing proxyTicket in " + xml
 
-    const xml_ = await (await fetch(`${conf.cas_base_url}/proxyValidate?service=${encodeURIComponent(targetService)}&ticket=${pticket}`)).text()
+    const xml_ = (await navigate({}, `${conf.cas_base_url}/proxyValidate?service=${encodeURIComponent(targetService)}&ticket=${pticket}`)).body
     expect(xml_).toContain(`<cas:proxy>${conf.backChannelServer.frontalUrl}//pgtCallback</cas:proxy>`)
     expect(xml_).toContain(`<cas:user>${conf.user.login}</cas:user>`)
     expect(xml_).not.toContain(`<cas:uid>${conf.user.login}</cas:uid>`)

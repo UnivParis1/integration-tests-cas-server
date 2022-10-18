@@ -67,11 +67,15 @@ async function navigate(ua, url, params) {
             return await navigate(ua, location ?? throw_("no redirect to follow"))
         }
     } else if (resp.statusCode !== 200) {
-        throw `expected HTTP 200, got HTTP ${resp.statusCode} for url ${url.href}`
+        throw { 
+            error: `expected HTTP 200, got HTTP ${resp.statusCode} for url ${url.href}`,
+            status: resp.statusCode,
+            body: await resp.body.text(),
+        }
     }
     const body = await resp.body.text()
     const $ = resp.headers['content-type']?.startsWith('text/html') ? cheerio.load(body) : undefined
-    return { location, body, $ }
+    return { cookies: ua.cookieJar?.[url.origin], location, body, $ }
 }
 
 async function form_post(ua, $) {

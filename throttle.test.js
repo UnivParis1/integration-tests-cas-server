@@ -5,15 +5,20 @@ const conf = require('./conf');
 // can NOT be done in parallel with other tests!!
 test('throttle', async () => {
     const invalid_login = async (password) => {
-        return await cas.login_form_post(conf.test_services.p2, { login: 'test_throttle', password }, false)
+        try {
+            await cas.login_form_post(conf.test_services.p2, { login: 'test_throttle', password }, false)
+            throw "login should have failed"
+        } catch (e) {
+            return e
+        }
     }
-    expect((await invalid_login('first')).status).toBe(401)
+    let err = await invalid_login('first')
+    expect(err.status).toBe(401)
     await helpers.waitSeconds(2)
 
-    let response = await invalid_login('second')
-    expect(response.status).toBe(423)
-    const html = await response.text()
-    expect(html).toContain(`You've been throttled`) // Vous avez saisi un mauvais mot de passe trop de fois de suite. Vous avez été rejeté
+    err = await invalid_login('second')
+    expect(err.status).toBe(423)
+    expect(err.body).toContain(`Vous avez saisi un mauvais mot de passe trop de fois de suite. Vous avez été rejeté.`) // You've been throttled
 
     //console.log("waiting to be allowed again")
     await helpers.waitSeconds(3)
