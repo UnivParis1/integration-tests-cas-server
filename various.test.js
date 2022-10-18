@@ -15,7 +15,7 @@ test.concurrent('login_page', async () => {
     expect(html).toContain('<span>Connexion via FranceConnect : </span>')
 })
 
-test.concurrent('logout', async () => {
+test.concurrent('logout redirect', async () => {
     const url = `${conf.cas_base_url}/logout?service=${encodeURIComponent(conf.test_services.p2)}`
     const response = await fetch(url, { redirect: 'manual' })
     expect(response.status).toBe(302)
@@ -25,6 +25,24 @@ test.concurrent('logout', async () => {
 test.concurrent('login_with_mail', async () => {
     const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.p2_serviceValidate, conf.test_services.p2, { ...conf.user, login: conf.user.mail})
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+})
+
+test.concurrent('logout removes TGC', async () => {
+    const service = `${conf.backChannelServer.frontalUrl}/app1`
+    const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
+    const xml = await cas.p2_serviceValidate(service, ticket)
+    expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+
+    await fetch(`${conf.cas_base_url}/logout`, {
+        headers: { Cookie: `TGC=${tgc}` },
+        redirect: 'manual',
+    })
+
+    const response = await fetch(`${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`, {
+        headers: { Cookie: `TGC=${tgc}` },
+        redirect: 'manual',
+    })
+    expect(response.status).toBe(200)
 })
 
 if (conf.features.includes('single_logout'))
