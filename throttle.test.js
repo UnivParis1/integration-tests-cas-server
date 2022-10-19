@@ -14,6 +14,7 @@ test('throttle', async () => {
     }
     let err = await invalid_login('first')
     expect(err.status).toBe(401)
+    expect(err.body).toContain(`Mauvais identifiant / mot de passe.`)
     await helpers.waitSeconds(2)
 
     err = await invalid_login('second')

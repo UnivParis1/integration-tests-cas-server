@@ -65,6 +65,19 @@ test.concurrent('p3/serviceValidate with FORM post', () => test_the_different_ti
 if (conf.features.includes('samlValidate'))
 test.concurrent('samlValidate with FORM post', () => test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_form_post))
 
+test.concurrent('parallel tickets on same TGT & same base service', async () => {
+    const service = conf.test_services.p2
+    const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
+    const ticket2 = await cas.get_ticket_using_TGT(service + "?foo=2", tgc)
+    const ticket3 = await cas.get_ticket_using_TGT(service + "?foo=3", tgc)
+    const xml2 = await cas.p2_serviceValidate(service + "?foo=2", ticket2)
+    const xml1 = await cas.p2_serviceValidate(service, ticket)
+    const xml3 = await cas.p2_serviceValidate(service + "?foo=3", ticket3)
+    for (const xml of [xml1, xml2, xml3]) {
+        expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+    }
+})
+
 async function test_proxy_ticket(service, targetService) {
     const pgt = await cas.get_pgt(service, conf.user)
 

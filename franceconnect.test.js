@@ -45,10 +45,11 @@ async function login_using_fc_and_ldap(ua, service, fc_user) {
     return await form_post(ua, cas_login_ldap.$)
 }
 
-async function check_ticket_validation(service, location, lastLoginIsFranceConnect) {
+async function check_p3_ticket_validation(service, location, lastLoginIsFranceConnect) {
     expect(location).toContain(`ticket=`)
     const ticket = cas.get_ticket_from_location(location)
     const xml = await cas.p3_serviceValidate(service, ticket)
+    expect(xml).toContain(`<cas:user>pldupont</cas:user>`)
     expect(xml).toContain(`<cas:uid>pldupont</cas:uid>`)
     expect(xml).toContain(`<cas:givenName>Paul Louis</cas:givenName>`)
     expect(xml).toContain(`<cas:sn>Dupont</cas:sn>`)
@@ -59,28 +60,43 @@ async function check_ticket_validation(service, location, lastLoginIsFranceConne
     }
 }
 
-test.concurrent('FranceConnect login => no exact match => LDAP login => different birthday error', async () => {
+async function check_no_attrs_ticket_validation(service, location, lastLoginIsFranceConnect) {
+    expect(location).toContain(`ticket=`)
+    const ticket = cas.get_ticket_from_location(location)
+    const xml = await cas.p2_serviceValidate(service, ticket)
+    expect(xml).toContain(`<cas:user>pldupont</cas:user>`)
+    expect(xml).not.toContain(`<cas:uid>pldupont</cas:uid>`)
+    expect(xml).not.toContain(`<cas:givenName>Paul Louis</cas:givenName>`)
+    expect(xml).not.toContain(`<cas:sn>Dupont</cas:sn>`)
+    if (lastLoginIsFranceConnect) {
+        expect(xml).toContain(`<cas:clientName>FranceConnect</cas:clientName>`)
+    } else {
+        expect(xml).not.toContain(`<cas:clientName>FranceConnect</cas:clientName>`)
+    }
+}
+
+test('FranceConnect login => no exact match => LDAP login => different birthday error', async () => {
     const service = conf.test_services.p3
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc_and_ldap(ua, service, fc_users.birthday_different)
     expect(resp.body).toContain(`Nom de famille et date de naissance provenant de France Connect ne correspondent pas à l'utilisateur`)
 })
 
-test.concurrent('FranceConnect login => no exact match => LDAP login => ajout supannFCSub', async () => {
+test('FranceConnect login => no exact match => LDAP login => ajout supannFCSub', async () => {
     await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
     
     const service = conf.test_services.p3
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc_and_ldap(ua, service, fc_users.same_birthday)
-    await check_ticket_validation(service, resp.location, false)
+    await check_p3_ticket_validation(service, resp.location, false)
 
     // On ré-essaye maintenant que le compte a un supannFCSub. On n'a plus besoin de se logger sur LDAP
     ua = new_navigate_until_service(service)
     const resp2 = await login_using_fc(ua, service, fc_users.same_birthday)
-    await check_ticket_validation(service, resp2.location, true)
+    await check_p3_ticket_validation(service, resp2.location, true)
 })
 
-test.concurrent('FranceConnect login => exact match => ajout supannFCSub + logout', async () => {
+test('FranceConnect login => exact match => ajout supannFCSub + logout', async () => {
     await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
 
     const service = conf.test_services.p3
@@ -88,12 +104,12 @@ test.concurrent('FranceConnect login => exact match => ajout supannFCSub + logou
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc(ua, service, fc_users.exact_match)
     // => l'entrée LDAP a maintenant un supannFCSub
-    await check_ticket_validation(service, resp.location, true)
+    await check_p3_ticket_validation(service, resp.location, true)
    
     // On ré-essaye maintenant que le compte a un supannFCSub. Le résultat est le même, sauf qu'il n'y a pas eu besoin de "onlyFranceConnectSub" de interrupt.groovy
     ua = new_navigate_until_service(service)
     const resp2 = await login_using_fc(ua, service, fc_users.exact_match)
-    await check_ticket_validation(service, resp2.location, true)
+    await check_p3_ticket_validation(service, resp2.location, true)
 
     // Avec le même ua, on teste maintenant le logout
     const cas_logout_url = `${conf.cas_base_url}/logout?service=${encodeURIComponent(conf.test_services.p2)}`
@@ -107,5 +123,21 @@ test.concurrent('FranceConnect login => exact match => ajout supannFCSub + logou
 
     // Avec le même ua, on teste le relog qui doit nécessiter d'entrer le mot de passe FranceConnect à nouveau
     const resp3 = await login_using_fc(ua, service, fc_users.exact_match)
-    await check_ticket_validation(service, resp3.location, true)
+    await check_p3_ticket_validation(service, resp3.location, true)
 }, 10/*seconds*/ * 1000)
+
+test('FranceConnect login => no attrs serviceValidate', async () => {
+    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+
+    const service = conf.test_services.p2
+    
+    let ua = new_navigate_until_service(service)
+    const resp = await login_using_fc(ua, service, fc_users.exact_match)
+    // => l'entrée LDAP a maintenant un supannFCSub
+    await check_no_attrs_ticket_validation(service, resp.location, true)
+   
+    // On ré-essaye maintenant que le compte a un supannFCSub. Le résultat est le même, sauf qu'il n'y a pas eu besoin de "onlyFranceConnectSub" de interrupt.groovy
+    ua = new_navigate_until_service(service)
+    const resp2 = await login_using_fc(ua, service, fc_users.exact_match)
+    await check_no_attrs_ticket_validation(service, resp2.location, true)
+})
