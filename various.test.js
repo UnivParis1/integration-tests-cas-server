@@ -65,6 +65,7 @@ test.concurrent('p3/serviceValidate with FORM post', () => test_the_different_ti
 if (conf.features.includes('samlValidate'))
 test.concurrent('samlValidate with FORM post', () => test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_form_post))
 
+// this test requires CAS <= 6.5 or cas.ticket.tgt.core.only-track-most-recent-session=false (cf https://github.com/apereo/cas/commit/901d8895f99dd72d72973a951cd2d8876c6ac6ff#diff-95999504a95c0f1fbf90a10b15622c50dd0d4ce8bc39877ba19a63e8f816d4a9R46 )
 test.concurrent('parallel tickets on same TGT & same base service', async () => {
     const service = conf.test_services.p2
     const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
