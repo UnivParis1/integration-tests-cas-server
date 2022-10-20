@@ -75,6 +75,12 @@ async function check_no_attrs_ticket_validation(service, location, lastLoginIsFr
     }
 }
 
+// simple test to ensure conf.user_for_fc is valid
+test('login with user_for_fc', async () => {
+    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.p2_serviceValidate, conf.test_services.p2, conf.user_for_fc)
+    expect(xml).toContain(`<cas:user>${conf.user_for_fc.login}</cas:user>`)
+})
+
 test('FranceConnect login => no exact match => LDAP login => different birthday error', async () => {
     const service = conf.test_services.p3
     let ua = new_navigate_until_service(service)
