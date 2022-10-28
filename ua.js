@@ -36,13 +36,15 @@ async function navigate(ua, url, params) {
     params ??= {}
     params.headers ??= {}
     params.headers.cookie ??= cookiesToString(ua.cookieJar?.[url.origin])
-    if (verbose) console.log(`${url.href}
+    if (verbose) console.log(`${params.method || 'GET'} ${url.href}
   using cookies: ${params.headers.cookie}
   and body ${params.body}`)
 
     // call the url
     const resp = await undici.request(url, params)
     const location = resp.headers.location
+
+    if (verbose && location) console.log("response redirect to", location)
 
     // store prevUrl & cookies in ua
     ua.prevUrl = url
@@ -57,8 +59,8 @@ async function navigate(ua, url, params) {
                 ua.cookieJar[url.origin][name] = value
             }
         }
-        if (verbose) console.log(resp.headers['set-cookie'])
-        if (verbose) console.log(`${url.origin} cookies: ${JSON.stringify(ua.cookieJar[url.origin])}`)
+        //if (verbose) console.log(resp.headers['set-cookie'])
+        if (verbose) console.log(`cookieJar updated for ${url.origin} : ${JSON.stringify(ua.cookieJar[url.origin])}`)
     }
 
     if (resp.statusCode === 302) {
