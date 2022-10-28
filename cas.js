@@ -79,6 +79,7 @@ async function samlValidate(service, ticket) {
     const url = `${conf.cas_base_url}/samlValidate?TARGET=${encodeURIComponent(service)}`
     return (await navigate({}, url, {
         method: 'POST',
+        headers: { 'Content-type': 'text/xml' },
         body: helpers.samlRequest(ticket),
     })).body
 }
