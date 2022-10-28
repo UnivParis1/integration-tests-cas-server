@@ -36,13 +36,13 @@ test.concurrent('logout removes TGC', async () => {
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     await undici.request(`${conf.cas_base_url}/logout`, {
-        headers: { Cookie: `TGC=${tgc}` },
+        headers: { Cookie: `shib_idp_session=${tgc}` },
     })
 
     const response = await undici.request(`${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`, {
-        headers: { Cookie: `TGC=${tgc}` },
+        headers: { Cookie: `shib_idp_session=${tgc}` },
     })
-    expect(response.statusCode).toBe(200)
+    expect(response.headers.location).not.toContain("ticket=")
 })
 
 if (conf.features.includes('single_logout'))
@@ -54,7 +54,7 @@ test.concurrent('single_logout', async () => {
 
     backChannelServer.start_if_not_running()
     await undici.request(`${conf.cas_base_url}/logout`, {
-        headers: { Cookie: `TGC=${tgc}` },
+        headers: { Cookie: `shib_idp_session=${tgc}` },
     })
     const logoutRequest = await backChannelServer.expectSingleLogoutRequest(ticket, 1/*seconds*/ * 1000)
     expect(logoutRequest).toContain(`<saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${conf.user.login}</saml:NameID>`)
@@ -87,7 +87,7 @@ async function test_proxy_ticket(service, targetService) {
     if (!pticket) throw "missing proxyTicket in " + xml
 
     const xml_ = (await navigate({}, `${conf.cas_base_url}/proxyValidate?service=${encodeURIComponent(targetService)}&ticket=${pticket}`)).body
-    expect(xml_).toContain(`<cas:proxy>${conf.backChannelServer.frontalUrl}//pgtCallback</cas:proxy>`)
+    expect(xml_).toContain(`<cas:proxy>${service}</cas:proxy>`)
     expect(xml_).toContain(`<cas:user>${conf.user.login}</cas:user>`)
     expect(xml_).not.toContain(`<cas:uid>${conf.user.login}</cas:uid>`)
     expect(xml_).not.toContain(`<cas:mail>${conf.user.mail}</cas:mail>`)

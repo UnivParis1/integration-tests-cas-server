@@ -21,13 +21,14 @@ async function login_form_post(service, user, rememberMe) {
     const $ = response.$
     $("#username").val(user.login);
     $("#password").val(user.password);
+    $("form").append("<input name='_eventId_proceed' value=''>") // should be done by cheerio?
     if (rememberMe) $("#rememberMe").prop('checked', true)
     return await form_post(ua, $)
 }
 
 async function get_tgc_and_ticket_using_form_post(service, user, rememberMe) {
     const response = await login_form_post(service, user, rememberMe)
-    const tgc = response.cookies?.TGC
+    const tgc = response.cookies?.shib_idp_session
     const ticket = await get_ticket_from_response_location(response)
     return { tgc, ticket }
 }
@@ -38,7 +39,7 @@ async function get_ticket_using_form_post(service, user) {
 
 async function get_ticket_using_TGT(service, tgc) {
     const response = await navigate(new_navigate_until_service(service), `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`, {
-        headers: { cookie: `TGC=${tgc}` },
+        headers: { cookie: `shib_idp_session=${tgc}` },
     })
     return await get_ticket_from_response_location(response)
 }
