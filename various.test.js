@@ -78,6 +78,16 @@ test.concurrent('parallel tickets on same TGT & same base service', async () => 
     }
 })
 
+test.concurrent('ticket can be validated only once', async () => {
+    const service = conf.test_services.p2
+    const ticket = await cas.get_ticket_using_form_post(service, conf.user)
+    console.log(ticket)
+    const xml = await cas.p2_serviceValidate(service, ticket)
+    expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+    const err = await cas.p2_serviceValidate(service, ticket)
+    expect(err).toContain(`<cas:authenticationFailure code="INVALID_TICKET">`)
+})
+
 async function test_proxy_ticket(service, targetService) {
     const pgt = await cas.get_pgt(service, conf.user)
 
