@@ -23,8 +23,13 @@ const new_navigate_until_service = (service) => (
     { noFollowIf: resp => resp.headers.location.startsWith(service) }    
 )
 
+function add_cookie(ua, url, name, value) {
+    ((ua.cookieJar ??= {})[new URL(url).origin] ??= {})[name] = value
+    return ua
+}
+
 function add_cookie_on_prev_url(ua, name, value) {
-    ua.cookieJar[ua.prevUrl.origin][name] = value
+    add_cookie(ua, ua.prevUrl.origin, name, value)
 }
 
 // NB: undici.request allow things "fetch" can't do: set mode "navigate" which is checked by FC
@@ -87,4 +92,4 @@ async function form_post(ua, $) {
 	}, body: $("form").serialize() })
 }
 
-module.exports = { new_navigate_until_service, add_cookie_on_prev_url, navigate, form_post, $first }
+module.exports = { new_navigate_until_service, add_cookie, add_cookie_on_prev_url, navigate, form_post, $first }

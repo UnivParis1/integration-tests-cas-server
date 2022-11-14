@@ -14,10 +14,15 @@ const fc_users = {
 async function login_using_fc(ua, service, fc_user) {
     const cas_url = `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`
 
-    const cas_login = await navigate(ua, cas_url)
-    expect(cas_login.location).toBeFalsy()
-    const fc_button_or_a = cas_login.$('#FranceConnect') // <a href> in 6.5, <button redirectUrl> in 6.6
-    const to_fc_url = (fc_button_or_a.attr('redirecturl') || fc_button_or_a.attr('href')) ?? throw_("expected #FranceConnect in " + cas_login.body)
+    let to_fc_url;
+    if (conf.flavor === 'lemonldap') {
+        to_fc_url = `${cas_url}&idp=FranceConnect`// (fc_button_or_a.attr('redirecturl') || fc_button_or_a.attr('href')) ?? throw_("expected #FranceConnect in " + cas_login.body)
+    } else {
+        const cas_login = await navigate(ua, cas_url)
+        expect(cas_login.location).toBeFalsy()
+        const fc_button_or_a = cas_login.$('#FranceConnect') // <a href> in 6.5, <button redirectUrl> in 6.6
+        to_fc_url = (fc_button_or_a.attr('redirecturl') || fc_button_or_a.attr('href')) ?? throw_("expected #FranceConnect in " + cas_login.body)
+    }
     const fc_wayf = await navigate(ua, to_fc_url)
     expect(fc_wayf.body).toContain(`Je choisis un compte pour me connecter sur`)
 
@@ -32,17 +37,18 @@ async function login_using_fc(ua, service, fc_user) {
 }
 
 async function login_using_fc_and_ldap(ua, service, fc_user) {
-    const interrupt = await login_using_fc(ua, service, fc_user)
-    expect(interrupt.body).toContain(`var autoRedirect = true;`)
-    expect(interrupt.body).toContain(`var emptyLinks = false;`)
-    expect(interrupt.body).toContain(`var redirectTimeout = -1;`)
-    const js_redirect = JSON.parse(interrupt.body.match(/var link = (".*?")/)?.[1] ?? throw_("expected redirect link"))
+    let cas_login_ldap = await login_using_fc(ua, service, fc_user)
 
-    const cas_login_ldap = await navigate(ua, js_redirect)
-    cas_login_ldap.$("#username").val(conf.user_for_fc.login);
-    cas_login_ldap.$("#password").val(conf.user_for_fc.password);
-
-    return await form_post(ua, cas_login_ldap.$)
+    if (conf.flavor === 'apereo_cas') {
+        // Apereo CAS JS FORM POST redirect
+        const interrupt = cas_login_ldap;
+        expect(interrupt.body).toContain(`var autoRedirect = true;`)
+        expect(interrupt.body).toContain(`var emptyLinks = false;`)
+        expect(interrupt.body).toContain(`var redirectTimeout = -1;`)
+        const js_redirect = JSON.parse(interrupt.body.match(/var link = (".*?")/)?.[1] ?? throw_("expected redirect link"))
+        cas_login_ldap = await navigate(ua, js_redirect)
+    }
+    return await cas.login_form_post_(ua, cas_login_ldap, conf.user_for_fc, false)
 }
 
 async function check_p3_ticket_validation(service, location, lastLoginIsFranceConnect) {

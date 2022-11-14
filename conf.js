@@ -1,5 +1,7 @@
 module.exports = {
     cas_base_url: 'https://cas.univ.fr/cas',
+    flavor: 'apereo_cas', // one of: apereo_cas, shibboleth or lemonldap
+    //tgc_name: 'TGC', // by default, computed based on conf.flavor
 
     features: ['proxy', 'single_logout', 'samlValidate'],
 

@@ -1,9 +1,19 @@
+const crypto = require("crypto")
 const helpers = require('./helpers');
 const backChannelServer = require('./backChannelServer');
 const conf = require('./conf');
 const { throw_ } = require('./helpers')
 const { navigate, new_navigate_until_service, form_post } = require('./ua')
 
+const flavor_to_tgc_name = {
+    apereo_cas: 'TGC',
+    lemonldap: 'lemonldap',
+    shibboleth: 'shib_idp_session',
+}
+
+const tgc_name = () => (
+    conf.tgc_name || flavor_to_tgc_name[conf.flavor] || throw_("unknown tgc_name")
+)
 
 const get_ticket_from_location = (location) => (
     location.match(/[?&]ticket=([^&]*)$/)?.[1] ?? throw_("expected ticket in location " + location)
@@ -14,20 +24,43 @@ async function get_ticket_from_response_location(response) {
     return get_ticket_from_location(location)
 }
 
+async function login_form_post_(ua, response, user, rememberMe) {
+    let $ = response.$
+
+    if (conf.flavor === 'lemonldap') {
+        if (response.body.includes('/kerberos.js')) {
+            // lemonldap has an intermediate form to handle optional Kerberos
+            $ = (await form_post(ua, $)).$
+        }
+        $("[name=user]").val(user.login);
+        $("[name=password]").val(user.password);
+        if (rememberMe) {
+            $("[name=stayconnected]").prop('checked', true)
+            // lemonldap has an intermediate form which computes a fingerprint (... computed but ignored with option "stayConnectedBypassFG")
+            $ = (await form_post(ua, $)).$
+            $("#fg").val(crypto.randomBytes(20).toString('hex'))
+        }
+    } else {
+        $("#username").val(user.login);
+        $("#password").val(user.password);
+        if (conf.flavor === 'shibboleth') {
+            $("form").append("<input name='_eventId_proceed' value=''>") // should be done by cheerio?
+        }
+        if (rememberMe) $("#rememberMe").prop('checked', true)
+    }
+    return await form_post(ua, $)
+}
+
 async function login_form_post(service, user, rememberMe) {
     const ua = new_navigate_until_service(service)
     const url = `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`
     const response = await navigate(ua, url)
-    const $ = response.$
-    $("#username").val(user.login);
-    $("#password").val(user.password);
-    if (rememberMe) $("#rememberMe").prop('checked', true)
-    return await form_post(ua, $)
+    return await login_form_post_(ua, response, user, rememberMe)
 }
 
 async function get_tgc_and_ticket_using_form_post(service, user, rememberMe) {
     const response = await login_form_post(service, user, rememberMe)
-    const tgc = response.cookies?.TGC
+    const tgc = response.cookies?.[tgc_name()]
     const ticket = await get_ticket_from_response_location(response)
     return { tgc, ticket }
 }
@@ -38,7 +71,7 @@ async function get_ticket_using_form_post(service, user) {
 
 async function get_ticket_using_TGT(service, tgc) {
     const response = await navigate(new_navigate_until_service(service), `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`, {
-        headers: { cookie: `TGC=${tgc}` },
+        headers: { cookie: `${tgc_name()}=${tgc}` },
     })
     return await get_ticket_from_response_location(response)
 }
@@ -79,6 +112,7 @@ async function samlValidate(service, ticket) {
     const url = `${conf.cas_base_url}/samlValidate?TARGET=${encodeURIComponent(service)}`
     return (await navigate({}, url, {
         method: 'POST',
+        headers: { 'Content-type': 'text/xml' },
         body: helpers.samlRequest(ticket),
     })).body
 }
@@ -96,8 +130,8 @@ async function get_pgt(service, user) {
 }
 
 module.exports = { 
-    get_ticket_from_location,
-    login_form_post, get_ticket_using_form_post,
+    tgc_name, get_ticket_from_location,
+    login_form_post_, login_form_post, get_ticket_using_form_post,
     kinit, login_using_kerberos, get_ticket_using_kerberos, 
     get_tgc_and_ticket_using_form_post,
     get_ticket_using_TGT,
