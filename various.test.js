@@ -84,7 +84,7 @@ test.concurrent('ticket can be validated only once', async () => {
     console.log(ticket)
     const xml = await cas.p2_serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
-    const err = await cas.p2_serviceValidate(service, ticket)
+    const err = await cas.p2_serviceValidate(service, ticket).catch(err => err.body) // KEYCLOAK returns HTTP 400, handle it as 200
     expect(err).toContain(`<cas:authenticationFailure code="INVALID_TICKET">`)
 })
 

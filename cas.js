@@ -9,6 +9,7 @@ const flavor_to_tgc_name = {
     apereo_cas: 'TGC',
     lemonldap: 'lemonldap',
     shibboleth: 'shib_idp_session',
+    keycloak: 'KEYCLOAK_IDENTITY',
 }
 
 const tgc_name = () => (
@@ -112,7 +113,10 @@ async function samlValidate(service, ticket) {
     const url = `${conf.cas_base_url}/samlValidate?TARGET=${encodeURIComponent(service)}`
     return (await navigate({}, url, {
         method: 'POST',
-        headers: { 'Content-type': 'text/xml' },
+        headers: { 
+            'soapaction': 'http://www.oasis-open.org/committees/security', // required by KEYCLOAK
+            'Content-type': 'text/xml',
+        },
         body: helpers.samlRequest(ticket),
     })).body
 }
