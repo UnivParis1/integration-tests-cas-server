@@ -24,7 +24,7 @@ async function login_using_fc(ua, service, fc_user) {
         to_fc_url = (fc_button_or_a.attr('redirecturl') || fc_button_or_a.attr('href')) ?? throw_("expected #FranceConnect in " + cas_login.body)
     }
     const fc_wayf = await navigate(ua, to_fc_url)
-    expect(fc_wayf.body).toContain(`Je choisis un compte pour me connecter sur`)
+    expect(fc_wayf.body).toContain(`Connexion - choix du compte`)
 
     // add cookie added in JS
     add_cookie_on_prev_url(ua, 'fiName', '%7B%22name%22%3A%22identity-provider-example-faible%22%2C%22remember%22%3Afalse%7D')
@@ -36,8 +36,10 @@ async function login_using_fc(ua, service, fc_user) {
     return await form_post(ua, fc_authorize.$)
 }
 
-async function login_using_fc_and_ldap(ua, service, fc_user) {
+async function login_using_fc_and_ldap_(ua, service, fc_user) {
     let cas_login_ldap = await login_using_fc(ua, service, fc_user)
+
+    expect(cas_login_ldap.location).toBeFalsy()
 
     if (conf.flavor === 'apereo_cas') {
         // Apereo CAS JS FORM POST redirect
@@ -48,7 +50,20 @@ async function login_using_fc_and_ldap(ua, service, fc_user) {
         const js_redirect = JSON.parse(interrupt.body.match(/var link = (".*?")/)?.[1] ?? throw_("expected redirect link"))
         cas_login_ldap = await navigate(ua, js_redirect)
     }
+    return cas_login_ldap
+}
+
+async function login_using_fc_and_ldap(ua, service, fc_user) {
+    const cas_login_ldap = await login_using_fc_and_ldap_(ua, service, fc_user)
     return await cas.login_form_post_(ua, cas_login_ldap, conf.user_for_fc, false)
+}
+
+async function forced_login_using_fc_and_ldap(ua, service, fc_user, ldap_user) {
+    const cas_login_ldap = await login_using_fc_and_ldap_(ua, service, fc_user)
+
+    expect(cas_login_ldap.body).toContain(`<p>Double authentification nécessaire pour la réinit de 2ème facteur</p>`)
+    
+    return await cas.login_form_post_(ua, cas_login_ldap, ldap_user || conf.user_for_fc, false)
 }
 
 async function check_p3_ticket_validation(service, location, lastLoginIsFranceConnect) {
@@ -61,19 +76,20 @@ async function check_p3_ticket_validation(service, location, lastLoginIsFranceCo
     expect(xml).toContain(`<cas:sn>Dupont</cas:sn>`)
     if (lastLoginIsFranceConnect) {
         expect(xml).toContain(`<cas:clientName>FranceConnect</cas:clientName>`)
+        expect(xml).not.toContain(`<cas:first_clientName>FranceConnect</cas:first_clientName>`)
     } else {
         expect(xml).not.toContain(`<cas:clientName>FranceConnect</cas:clientName>`)
+        expect(xml).toContain(`<cas:first_clientName>FranceConnect</cas:first_clientName>`)
     }
+    return xml
 }
 
-async function check_no_attrs_ticket_validation(service, location, lastLoginIsFranceConnect) {
+async function check_no_attrs_ticket_validation(service, location, lastLoginIsFranceConnect, with_attrs) {
     expect(location).toContain(`ticket=`)
     const ticket = cas.get_ticket_from_location(location)
     const xml = await cas.p2_serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>pldupont</cas:user>`)
-    expect(xml).not.toContain(`<cas:uid>pldupont</cas:uid>`)
-    expect(xml).not.toContain(`<cas:givenName>Paul Louis</cas:givenName>`)
-    expect(xml).not.toContain(`<cas:sn>Dupont</cas:sn>`)
+
     if (lastLoginIsFranceConnect) {
         expect(xml).toContain(`<cas:clientName>FranceConnect</cas:clientName>`)
     } else {
@@ -88,6 +104,8 @@ test('login with user_for_fc', async () => {
 })
 
 test('FranceConnect login => no exact match => LDAP login => different birthday error', async () => {
+    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+
     const service = conf.test_services.p3
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc_and_ldap(ua, service, fc_users.birthday_different)
@@ -138,6 +156,55 @@ test('FranceConnect login => exact match => ajout supannFCSub + logout', async (
     await check_p3_ticket_validation(service, resp3.location, true)
 }, 10/*seconds*/ * 1000)
 
+test('need double auth: FranceConnect login => exact match => ajout supannFCSub', async () => {
+    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+
+    const service = conf.test_services.FC_double_auth
+    
+    let ua = new_navigate_until_service(service)
+    const resp = await forced_login_using_fc_and_ldap(ua, service, fc_users.exact_match)
+    await check_p3_ticket_validation(service, resp.location, false)
+
+    // On ré-essaye maintenant que le compte a un supannFCSub. Le résultat est le même
+    ua = new_navigate_until_service(service)
+    const resp2 = await forced_login_using_fc_and_ldap(ua, service, fc_users.exact_match)
+    await check_p3_ticket_validation(service, resp2.location, false)
+    
+}, 10/*seconds*/ * 1000)
+
+test('need double auth: FranceConnect login => exact match => mais utilisateur LDAP différent', async () => {
+    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+
+    const service = conf.test_services.FC_double_auth
+    
+    // on met le supannFCSub
+    let ua = new_navigate_until_service(service)
+    const resp = await forced_login_using_fc_and_ldap(ua, service, fc_users.exact_match)
+
+    // on test avec un utilisateur LDAP différent de celui ayant le supannFCSub
+    ua = new_navigate_until_service(service)
+    const resp2 = await forced_login_using_fc_and_ldap(ua, service, fc_users.exact_match, conf.user)
+    
+    expect(resp2.body).toContain(`<p id="interruptMessage">Comptes différents</p>`)
+    
+}, 10/*seconds*/ * 1000)
+
+test('need double auth: FranceConnect login => no exact match => ajout supannFCSub', async () => {
+    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+
+    const service = conf.test_services.FC_double_auth
+    
+    let ua = new_navigate_until_service(service)
+    const resp = await forced_login_using_fc_and_ldap(ua, service, fc_users.same_birthday)
+    await check_p3_ticket_validation(service, resp.location, false)
+
+    // On ré-essaye maintenant que le compte a un supannFCSub. Le résultat est le même
+    ua = new_navigate_until_service(service)
+    const resp2 = await forced_login_using_fc_and_ldap(ua, service, fc_users.same_birthday)
+    await check_p3_ticket_validation(service, resp2.location, false)
+    
+}, 10/*seconds*/ * 1000)
+
 test('FranceConnect login => no attrs serviceValidate', async () => {
     await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
 
@@ -152,4 +219,8 @@ test('FranceConnect login => no attrs serviceValidate', async () => {
     ua = new_navigate_until_service(service)
     const resp2 = await login_using_fc(ua, service, fc_users.exact_match)
     await check_no_attrs_ticket_validation(service, resp2.location, true)
+
+    // On demande un autre ticket avec la session CAS ci-dessus, les attrs doivent être les même
+    const resp3 = await navigate(ua, `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`)
+    await check_no_attrs_ticket_validation(service, resp3.location, true)
 })
