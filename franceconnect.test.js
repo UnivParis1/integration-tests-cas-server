@@ -109,7 +109,7 @@ test('FranceConnect login => no exact match => LDAP login => different birthday 
     const service = conf.test_services.p3
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc_and_ldap(ua, service, fc_users.birthday_different)
-    expect(resp.body).toContain(`Nom de famille et date de naissance provenant de France Connect ne correspondent pas à l'utilisateur`)
+    expect(resp.body).toContain(`date de naissance provenant de France Connect ne correspond pas à l'utilisateur`)
 })
 
 test('FranceConnect login => no exact match => LDAP login => ajout supannFCSub', async () => {
