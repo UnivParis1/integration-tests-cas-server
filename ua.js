@@ -41,6 +41,7 @@ async function navigate(ua, url, params) {
     params ??= {}
     params.headers ??= {}
     params.headers.cookie ??= cookiesToString(ua.cookieJar?.[url.origin])
+    params.headers['User-Agent'] ??= 'xxxx' // pour FranceConnect avec Apereo CAS 7.0 ...
     if (verbose) console.log(`${params.method || 'GET'} ${url.href}
   using cookies: ${params.headers.cookie}
   and body ${params.body}`)

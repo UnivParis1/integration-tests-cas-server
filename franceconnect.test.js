@@ -44,10 +44,11 @@ async function login_using_fc_and_ldap_(ua, service, fc_user) {
     if (conf.flavor === 'apereo_cas') {
         // Apereo CAS JS FORM POST redirect
         const interrupt = cas_login_ldap;
-        expect(interrupt.body).toContain(`var autoRedirect = true;`)
-        expect(interrupt.body).toContain(`var emptyLinks = false;`)
-        expect(interrupt.body).toContain(`var redirectTimeout = -1;`)
-        const js_redirect = JSON.parse(interrupt.body.match(/var link = (".*?")/)?.[1] ?? throw_("expected redirect link"))
+        const let_or_var = interrupt.body.match(`let autoRedirect = `) ? 'let' : 'var'
+        expect(interrupt.body).toContain(`${let_or_var} autoRedirect = true;`)
+        expect(interrupt.body).toContain(`${let_or_var} emptyLinks = false;`)
+        expect(interrupt.body).toContain(`${let_or_var} redirectTimeout = -1;`)
+        const js_redirect = JSON.parse(interrupt.body.match(`${let_or_var} link = (".*?")`)?.[1] ?? throw_("expected redirect link"))
         cas_login_ldap = await navigate(ua, js_redirect)
     }
     return cas_login_ldap
