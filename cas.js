@@ -118,7 +118,7 @@ async function get_ticket_using_kerberos(service, _user) {
 }
 
 async function _serviceValidate(service, ticket, opts) {
-    let url = `${conf.cas_base_url}${opts?.p3 ? '/p3' : ''}/serviceValidate?service=${encodeURIComponent(service)}&ticket=${ticket}`
+    let url = `${conf.cas_base_url_internal}${opts?.p3 ? '/p3' : ''}/serviceValidate?service=${encodeURIComponent(service)}&ticket=${ticket}`
     if (opts.pgtUrl) url += '&pgtUrl=' + encodeURIComponent(opts.pgtUrl)
     return (await navigate({}, url)).body
 }
@@ -126,7 +126,7 @@ const p2_serviceValidate = (service, ticket) => _serviceValidate(service, ticket
 const p3_serviceValidate = (service, ticket) => _serviceValidate(service, ticket, { p3: true })
 
 async function samlValidate(service, ticket) {
-    const url = `${conf.cas_base_url}/samlValidate?TARGET=${encodeURIComponent(service)}`
+    const url = `${conf.cas_base_url_internal}/samlValidate?TARGET=${encodeURIComponent(service)}`
     return (await navigate({}, url, {
         method: 'POST',
         headers: { 

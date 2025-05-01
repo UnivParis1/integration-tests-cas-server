@@ -103,11 +103,11 @@ test.concurrent('ticket can be validated only once', async () => {
 async function test_proxy_ticket(service, targetService) {
     const pgt = await cas.get_pgt(service, conf.user)
 
-    const xml = (await navigate({}, `${conf.cas_base_url}/proxy?targetService=${encodeURIComponent(targetService)}&pgt=${pgt}`)).body
+    const xml = (await navigate({}, `${conf.cas_base_url_internal}/proxy?targetService=${encodeURIComponent(targetService)}&pgt=${pgt}`)).body
     const pticket = xml.match(/<cas:proxyTicket>([^<]*)/)?.[1]
     if (!pticket) throw "missing proxyTicket in " + xml
 
-    const xml_ = (await navigate({}, `${conf.cas_base_url}/proxyValidate?service=${encodeURIComponent(targetService)}&ticket=${pticket}`)).body
+    const xml_ = (await navigate({}, `${conf.cas_base_url_internal}/proxyValidate?service=${encodeURIComponent(targetService)}&ticket=${pticket}`)).body
     expect(xml_).toContain(`<cas:proxy>${conf.backChannelServer.frontalUrl}//pgtCallback</cas:proxy>`)
     expect(xml_).toContain(`<cas:user>${conf.user.login}</cas:user>`)
     expect(xml_).not.toContain(`<cas:uid>${conf.user.login}</cas:uid>`)

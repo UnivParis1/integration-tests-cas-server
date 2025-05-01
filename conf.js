@@ -1,5 +1,8 @@
+const cas_base_url = 'https://cas.univ.fr/cas'
+
 module.exports = {
-    cas_base_url: 'https://cas.univ.fr/cas',
+    cas_base_url,
+    cas_base_url_internal: cas_base_url,
     flavor: 'apereo_cas', // one of: apereo_cas, shibboleth or lemonldap
     //tgc_name: 'TGC', // by default, computed based on conf.flavor
 
