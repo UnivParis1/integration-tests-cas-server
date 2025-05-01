@@ -16,9 +16,18 @@ const tgc_name = () => (
     conf.tgc_name || flavor_to_tgc_name[conf.flavor] || throw_("unknown tgc_name")
 )
 
-const get_ticket_from_location = (location) => (
-    location.match(/[?&]ticket=([^&]*)$/)?.[1] ?? throw_("expected ticket in location " + location)
+const may_get_ticket_from_location = (location) => (
+    location.match(/[?&]ticket=([^&]*)$/)?.[1]
 )
+
+const get_ticket_from_location = (location) => (
+    may_get_ticket_from_location(location) ?? throw_("expected ticket in location " + location)
+)
+
+async function may_get_ticket_from_response_location(response) {
+    const location = response.location ?? throw_("expected header location")
+    return may_get_ticket_from_location(location)
+}
 
 async function get_ticket_from_response_location(response) {
     const location = response.location ?? throw_("expected header location")
@@ -75,6 +84,13 @@ async function get_ticket_using_TGT(service, tgc) {
         headers: { cookie: `${tgc_name()}=${tgc}` },
     })
     return await get_ticket_from_response_location(response)
+}
+
+async function may_get_ticket_using_TGT_cas_gateway(service, tgc) {
+    const response = await navigate(new_navigate_until_service(service), `${conf.cas_base_url}/login?gateway&service=${encodeURIComponent(service)}`, {
+        headers: { cookie: `${tgc_name()}=${tgc}` },
+    })
+    return await may_get_ticket_from_response_location(response)
 }
 
 async function kinit() {
@@ -139,6 +155,7 @@ module.exports = {
     login_form_post_, login_form_post, get_ticket_using_form_post,
     kinit, login_using_kerberos, get_ticket_using_kerberos, 
     get_tgc_and_ticket_using_form_post,
+    may_get_ticket_using_TGT_cas_gateway,
     get_ticket_using_TGT,
 
     p2_serviceValidate, p3_serviceValidate, samlValidate, 
