@@ -52,12 +52,12 @@ test.concurrent('single_logout', async () => {
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     backChannelServer.start_if_not_running()
+    const logoutRequest = backChannelServer.expectSingleLogoutRequest(ticket, 1/*seconds*/ * 1000)
     await undici.request(`${conf.cas_base_url}/logout`, {
         headers: { Cookie: `${cas.tgc_name()}=${tgc}` },
     })
-    const logoutRequest = await backChannelServer.expectSingleLogoutRequest(ticket, 1/*seconds*/ * 1000)
-    expect(logoutRequest).toContain(`<samlp:SessionIndex>${ticket}</samlp:SessionIndex>`)
-    expect(logoutRequest).toContain(`<saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${conf.user.login}</saml:NameID>`)
+    expect(await logoutRequest).toContain(`<saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${conf.user.login}</saml:NameID>`)
+    expect(await logoutRequest).toContain(`<samlp:SessionIndex>${ticket}</samlp:SessionIndex>`)
 }, 2000)
 
 test.concurrent('no attrs serviceValidate with FORM post', () => test_the_different_ticket_validations.p2(cas.get_ticket_using_form_post))
