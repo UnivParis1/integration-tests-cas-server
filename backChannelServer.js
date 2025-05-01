@@ -29,7 +29,7 @@ function start_if_not_running() {
         res.send('')
     })
     state.server = app.listen(conf.backChannelServer.port, () => {
-        //console.log(`Started on port ${conf.pgtUrlServer.port}!`)
+        //console.log(`Started on port ${conf.backChannelServer.port}!`)
     })
 }
 
