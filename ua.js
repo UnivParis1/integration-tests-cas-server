@@ -74,9 +74,10 @@ async function navigate(ua, url, params) {
             // transparent redirect
             return await navigate(ua, location ?? throw_("no redirect to follow"))
         }
-    } else if (resp.statusCode !== 200) {
+    } else if (resp.statusCode !== 200 && resp.statusCode !== 401) {
+        // NB: HTTP 401 is used for SPNEGO, it is a valid page
         throw { 
-            error: `expected HTTP 200, got HTTP ${resp.statusCode} for url ${url.href}`,
+            error: `expected HTTP 200/401, got HTTP ${resp.statusCode} for url ${url.href}`,
             status: resp.statusCode,
             body: await resp.body.text(),
         }
