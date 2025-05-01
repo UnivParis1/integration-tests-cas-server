@@ -123,6 +123,7 @@ async function samlValidate(service, ticket) {
 
 async function get_ticket_and_validate(get_ticket, validate, service, user) {
     const ticket = await get_ticket(service, user)
+    if (!ticket) throw "missing ticket"
     return await validate(service, ticket)
 }
 
