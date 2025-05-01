@@ -61,10 +61,10 @@ async function login_form_post_(ua, response, user, rememberMe) {
     return await form_post(ua, $)
 }
 
-async function login_form_post(service, user, rememberMe) {
+async function login_form_post(service, user, rememberMe, params) {
     const ua = new_navigate_until_service(service)
     const url = `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`
-    const response = await navigate(ua, url)
+    const response = await navigate(ua, url, params)
     return await login_form_post_(ua, response, user, rememberMe)
 }
 
