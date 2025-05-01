@@ -21,6 +21,7 @@ function start_if_not_running() {
     });
     app.post('/app1', bodyParser.urlencoded({ extended: false }), (req, res) => { 
         const ticket = req.body?.logoutRequest?.match(/<samlp:SessionIndex>([^<]*)/)?.[1]
+        //console.log('POST', req.path, ticket)
         if (!ticket) {
             console.error("expected single logoutRequest, got", req.body)
         } else {
