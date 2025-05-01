@@ -65,7 +65,9 @@ test('single_logout', async () => {
     await undici.request(`${conf.cas_base_url}/logout`, {
         headers: { Cookie: `${cas.tgc_name()}=${tgc}` },
     })
-    expect(await logoutRequest).toContain(`<saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${conf.user.login}</saml:NameID>`)
+    expect(await logoutRequest).toContain(`<saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${
+        conf.flavor === 'keycloak' ? '@NOT_USED@' : conf.user.login
+    }</saml:NameID>`)
     expect(await logoutRequest).toContain(`<samlp:SessionIndex>${ticket}</samlp:SessionIndex>`)
 }, 2000)
 
