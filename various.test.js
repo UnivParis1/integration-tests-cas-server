@@ -3,12 +3,21 @@ const test_the_different_ticket_validations = require('./test_the_different_tick
 const cas = require('./cas');
 const conf = require('./conf');
 const undici = require('undici')
-const { navigate, add_cookie } = require('./ua')
+const { navigate, add_cookie, form_post } = require('./ua')
 
 test.concurrent('login_page', async () => {
     const url = `${conf.cas_base_url}/login?service=${encodeURIComponent(conf.test_services.p2)}`
-    const resp = await navigate({}, url, { headers: { 'accept-language': 'fr' }})
-    if (conf.flavor === 'lemonldap') {
+    let ua = {}
+    let resp = await navigate(ua, url, { headers: { 'accept-language': 'fr' }})
+    
+    if (conf.flavor === 'keycloak') {
+        if (resp.body.includes('Kerberos Unsupported')) {
+            // keycloak has an intermediate form to handle optional Kerberos
+            resp = await form_post(ua, resp.$)
+        }
+        expect(resp.body).toContain('>Connexion Paris 1</')
+        expect(resp.body).toContain('>FranceConnect</')
+    } else if (conf.flavor === 'lemonldap') {
         expect(resp.body).toContain('passwordfield')
     } else {
         expect(resp.body).toContain('<span>Connexion Paris 1</span>')

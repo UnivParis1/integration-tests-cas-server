@@ -37,6 +37,11 @@ async function get_ticket_from_response_location(response) {
 async function login_form_post_(ua, response, user, rememberMe) {
     let $ = response.$
 
+    if (conf.flavor === 'keycloak' && response.body.includes('Kerberos Unsupported')) {
+        // keycloak has an intermediate form to handle optional Kerberos
+        $ = (await form_post(ua, $)).$
+    }
+
     if (conf.flavor === 'lemonldap') {
         if (response.body.includes('/kerberos.js')) {
             // lemonldap has an intermediate form to handle optional Kerberos
