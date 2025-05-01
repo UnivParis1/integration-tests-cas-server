@@ -107,18 +107,18 @@ async function kinit() {
     ])
 }
 
-async function login_using_kerberos(service, userAgent) {
+async function login_using_kerberos(service, userAgent, negotiate_first) {
     if (!process.env.KRB5CCNAME) throw "call kinit() first"
     const url = `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`
     return await helpers.popen('', 'curl', [
         '-si', 
         '-H', `User-Agent: ${userAgent}`,
-        '--negotiate', '-u', ':', 
+        ...negotiate_first ? ['--negotiate', '-u', ':'] : [], 
         url,
     ])
 }
 async function get_ticket_using_kerberos(service, _user) {
-    const headers_and_html = await login_using_kerberos(service, 'Kerberos')
+    const headers_and_html = await login_using_kerberos(service, 'Kerberos', true)
     return headers_and_html.match(/^Location: .*[&?]ticket=([^&\s]*)$/mi)?.[1]
 }
 
