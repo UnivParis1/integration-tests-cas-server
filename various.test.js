@@ -56,6 +56,7 @@ test.concurrent('single_logout', async () => {
         headers: { Cookie: `${cas.tgc_name()}=${tgc}` },
     })
     const logoutRequest = await backChannelServer.expectSingleLogoutRequest(ticket, 1/*seconds*/ * 1000)
+    expect(logoutRequest).toContain(`<samlp:SessionIndex>${ticket}</samlp:SessionIndex>`)
     expect(logoutRequest).toContain(`<saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${conf.user.login}</saml:NameID>`)
 }, 2000)
 
