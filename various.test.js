@@ -45,19 +45,65 @@ test.concurrent('logout removes TGC', async () => {
 })
 
 if (conf.features.includes('single_logout'))
-test.concurrent('single_logout', async () => {
+test('single_logout', async () => {
     const service = `${conf.backChannelServer.frontalUrl}/app1`
     const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
     const xml = await cas.p2_serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     backChannelServer.start_if_not_running()
-    const logoutRequest = backChannelServer.expectSingleLogoutRequest(ticket, 1/*seconds*/ * 1000)
+    const logoutRequest = backChannelServer.expectSingleLogoutRequest('/app1', ticket, 1/*seconds*/ * 1000)
     await undici.request(`${conf.cas_base_url}/logout`, {
         headers: { Cookie: `${cas.tgc_name()}=${tgc}` },
     })
     expect(await logoutRequest).toContain(`<saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${conf.user.login}</saml:NameID>`)
     expect(await logoutRequest).toContain(`<samlp:SessionIndex>${ticket}</samlp:SessionIndex>`)
+}, 2000)
+
+if (conf.features.includes('single_logout'))
+test('single_logout (multiple services)', async () => {
+    // en Keycloak, l'équivalent de "only-track-most-recent-session" est par défaut, en fonction du "client" Keycloak.
+    // Dans le test ci-dessous, il faut que /app1 et /app2 soient déclarés comme des "client"s Keycloak différents !
+    const service  = `${conf.backChannelServer.frontalUrl}/app1`
+    const service2 = `${conf.backChannelServer.frontalUrl}/app2`
+    const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
+    const xml = await cas.p2_serviceValidate(service, ticket)
+    expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+
+    const ticket2 = await cas.get_ticket_using_TGT(service2, tgc)
+    const xml2 = await cas.p2_serviceValidate(service2, ticket2)
+    expect(xml2).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+
+    backChannelServer.start_if_not_running()
+    const logoutRequest1 = backChannelServer.expectSingleLogoutRequest('/app1', ticket, 1/*seconds*/ * 1000)
+    const logoutRequest2 = backChannelServer.expectSingleLogoutRequest('/app2', ticket2, 1/*seconds*/ * 1000)
+    await undici.request(`${conf.cas_base_url}/logout`, {
+        headers: { Cookie: `${cas.tgc_name()}=${tgc}` },
+    })
+    expect(await logoutRequest2).toContain(`<samlp:SessionIndex>${ticket2}</samlp:SessionIndex>`)
+    expect(await logoutRequest1).toContain(`<samlp:SessionIndex>${ticket}</samlp:SessionIndex>`)
+}, 2000)
+
+if (conf.features.includes('single_logout'))
+test('single_logout (multiple tickets same service)', async () => {
+    const service = `${conf.backChannelServer.frontalUrl}/app1`
+    const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
+    const xml = await cas.p2_serviceValidate(service, ticket)
+    expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+
+    const ticket2 = await cas.get_ticket_using_TGT(service, tgc)
+    const xml2 = await cas.p2_serviceValidate(service, ticket2)
+    expect(xml2).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+
+    backChannelServer.start_if_not_running()
+    const logoutRequest1 = backChannelServer.expectSingleLogoutRequest('/app1', ticket, 1/*seconds*/ * 1000)
+    const logoutRequest2 = backChannelServer.expectSingleLogoutRequest('/app1', ticket2, 1/*seconds*/ * 1000)
+    await undici.request(`${conf.cas_base_url}/logout`, {
+        headers: { Cookie: `${cas.tgc_name()}=${tgc}` },
+    })
+    expect(await logoutRequest2).toContain(`<samlp:SessionIndex>${ticket2}</samlp:SessionIndex>`)
+    // only the last ticket is sent
+    await expect(logoutRequest1).rejects.toContain('timeout waiting for single LogoutRequest')
 }, 2000)
 
 test.concurrent('no attrs serviceValidate with FORM post', () => test_the_different_ticket_validations.p2(cas.get_ticket_using_form_post))

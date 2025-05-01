@@ -19,13 +19,18 @@ function start_if_not_running() {
         //console.log(pgtIou_to_pgt)
         res.send('')
     });
-    app.post('/app1', bodyParser.urlencoded({ extended: false }), (req, res) => { 
+    app.post('/app[12]', bodyParser.urlencoded({ extended: false }), (req, res) => { 
         const ticket = req.body?.logoutRequest?.match(/<samlp:SessionIndex>([^<]*)/)?.[1]
         //console.log('POST', req.path, ticket)
         if (!ticket) {
             console.error("expected single logoutRequest, got", req.body)
         } else {
-            state.singleLogoutRequest_to_resolve[ticket]?.(req.body.logoutRequest)
+            const resolve = state.singleLogoutRequest_to_resolve[`${req.path}:${ticket}`]
+            if (resolve) {
+                resolve(req.body.logoutRequest)
+            } else {
+                console.error(`unexpected logoutRequest on ${req.path} & ticket ${ticket}`)
+            }
         }
         res.send('')
     })
@@ -38,11 +43,11 @@ function stop_if_running() {
     state.server?.close()
 }
 
-const expectSingleLogoutRequest = (ticket, timeout_ms) => (
+const expectSingleLogoutRequest = (app_path, ticket, timeout_ms) => (
     new Promise((resolve, reject) => {
-        state.singleLogoutRequest_to_resolve[ticket] = resolve
+        state.singleLogoutRequest_to_resolve[`${app_path}:${ticket}`] = resolve
         setTimeout(_ => {
-            reject(`timeout waiting for single LogoutRequest for ticket ${ticket}`)
+            reject(`timeout waiting for single LogoutRequest from ${app_path} & ticket ${ticket}`)
         }, timeout_ms)
     })
 )
