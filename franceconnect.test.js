@@ -12,7 +12,7 @@ const fc_users = {
 }
 
 async function login_using_fc(ua, service, fc_user) {
-    const cas_url = `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`
+    const cas_url = cas.login_url(service)
 
     let to_fc_url;
     if (conf.flavor === 'lemonldap') {

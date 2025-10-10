@@ -24,6 +24,10 @@ const get_ticket_from_location = (location) => (
     may_get_ticket_from_location(location) ?? throw_("expected ticket in location " + location)
 )
 
+const login_url = (service, opts = {}) => (
+    `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}${opts.renew ? '&renew=true' : ''}${opts.gateway ? '&gateway=true' : ''}`
+)
+
 async function may_get_ticket_from_response_location(response) {
     const location = response.location ?? throw_("expected header location")
     return may_get_ticket_from_location(location)
@@ -68,7 +72,7 @@ async function login_form_post_(ua, response, user, rememberMe) {
 
 async function login_form_post(service, user, rememberMe, params) {
     const ua = new_navigate_until_service(service)
-    const url = `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`
+    const url = login_url(service)
     const response = await navigate(ua, url, params)
     return await login_form_post_(ua, response, user, rememberMe)
 }
@@ -85,14 +89,14 @@ async function get_ticket_using_form_post(service, user) {
 }
 
 async function get_ticket_using_TGT(service, tgc) {
-    const response = await navigate(new_navigate_until_service(service), `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`, {
+    const response = await navigate(new_navigate_until_service(service), login_url(service), {
         headers: { cookie: `${tgc_name()}=${tgc}` },
     })
     return await get_ticket_from_response_location(response)
 }
 
 async function may_get_ticket_using_TGT_cas_gateway(service, tgc) {
-    const response = await navigate(new_navigate_until_service(service), `${conf.cas_base_url}/login?gateway&service=${encodeURIComponent(service)}`, {
+    const response = await navigate(new_navigate_until_service(service), login_url(service, { gateway: true }), {
         headers: { cookie: `${tgc_name()}=${tgc}` },
     })
     return await may_get_ticket_from_response_location(response)
@@ -109,12 +113,11 @@ async function kinit() {
 
 async function login_using_kerberos(service, userAgent, negotiate_first) {
     if (!process.env.KRB5CCNAME) throw "call kinit() first"
-    const url = `${conf.cas_base_url}/login?service=${encodeURIComponent(service)}`
     return await helpers.popen('', 'curl', [
         '-si', 
         '-H', `User-Agent: ${userAgent}`,
         ...negotiate_first ? ['--negotiate', '-u', ':'] : [], 
-        url,
+        login_url(service),
     ])
 }
 async function get_ticket_using_kerberos(service, _user) {
@@ -156,7 +159,7 @@ async function get_pgt(service, user) {
 }
 
 module.exports = { 
-    tgc_name, get_ticket_from_location,
+    tgc_name, login_url, get_ticket_from_location,
     login_form_post_, login_form_post, get_ticket_using_form_post,
     kinit, login_using_kerberos, get_ticket_using_kerberos, 
     get_tgc_and_ticket_using_form_post,

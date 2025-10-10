@@ -6,7 +6,7 @@ const undici = require('undici')
 const { navigate, add_cookie, form_post } = require('./ua')
 
 test.concurrent('login_page', async () => {
-    const url = `${conf.cas_base_url}/login?service=${encodeURIComponent(conf.test_services.p2)}`
+    const url = cas.login_url(conf.test_services.p2)
     let ua = {}
     let resp = await navigate(ua, url, { headers: { 'accept-language': 'fr' }})
     
