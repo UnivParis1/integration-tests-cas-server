@@ -21,7 +21,7 @@ test.concurrent('login_page', async () => {
         expect(resp.body).toContain('passwordfield')
     } else {
         expect(resp.body).toContain('<span>Connexion Paris 1</span>')
-        expect(resp.body).toContain('<span>Connexion via FranceConnect : </span>')
+        expect(resp.body).toContain('<span>Connexion via FranceConnect :</span>')
     }
 })
 

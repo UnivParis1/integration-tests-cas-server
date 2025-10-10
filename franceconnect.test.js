@@ -68,7 +68,7 @@ async function login_using_fc_and_ldap(ua, service, fc_user) {
 async function forced_login_using_fc_and_ldap(ua, service, fc_user, ldap_user) {
     const cas_login_ldap = await login_using_fc_and_ldap_(ua, service, fc_user)
 
-    expect(cas_login_ldap.body).toContain(`<p>Double authentification nécessaire pour la réinit de 2ème facteur</p>`)
+    expect(cas_login_ldap.body).toContain(`<p>Double authentification nécessaire pour la réinitialisation de vos facteurs d'authentification renforcée</p>`)   
     
     return await cas.login_form_post_(ua, cas_login_ldap, ldap_user || conf.user_for_fc, false)
 }
