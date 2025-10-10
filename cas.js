@@ -99,6 +99,7 @@ async function may_get_ticket_using_TGT_cas_gateway(service, tgc) {
     const response = await navigate(new_navigate_until_service(service), login_url(service, { gateway: true }), {
         headers: { cookie: `${tgc_name()}=${tgc}` },
     })
+    expect(response.location).toBeTruthy()    
     return await may_get_ticket_from_response_location(response)
 }
 
