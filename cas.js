@@ -72,7 +72,7 @@ async function login_form_post_(ua, response, user, rememberMe) {
 
 async function login_form_post(service, user, opts) {
     const ua = new_navigate_until_service(service)
-    const url = login_url(service)
+    const url = login_url(service, opts)
     const response = await navigate(ua, url, opts.undici_params)
     return await login_form_post_(ua, response, user, opts.rememberMe)
 }
