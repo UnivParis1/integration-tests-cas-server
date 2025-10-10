@@ -15,8 +15,8 @@ async function cleanup() {
     await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user, {})
 }
 
-async function login_using_fc(ua, service, fc_user) {
-    const cas_url = cas.login_url(service)
+async function login_using_fc(ua, service, fc_user, opts = {}) {
+    const cas_url = cas.login_url(service, opts)
 
     let to_fc_url;
     if (conf.flavor === 'lemonldap') {
