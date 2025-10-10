@@ -34,11 +34,11 @@ function add_cookie_on_prev_url(ua, name, value) {
 
 // NB: undici.request allow things "fetch" can't do: set mode "navigate" which is checked by FC
 
-async function navigate(ua, url, params) {
+async function navigate(ua, url, undici_params) {
     url = new URL(url, ua.prevUrl)
 
     // may add cookies collected from previous navigation
-    params ??= {}
+    let params = undici_params ?? {}
     params.headers ??= {}
     params.headers.cookie ??= cookiesToString(ua.cookieJar?.[url.origin])
     params.headers['User-Agent'] ??= 'xxxx' // pour FranceConnect avec Apereo CAS 7.0 ...
