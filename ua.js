@@ -69,7 +69,7 @@ async function navigate(ua, url, undici_params) {
         if (verbose) console.log(`cookieJar updated for ${url.origin} : ${JSON.stringify(ua.cookieJar[url.origin])}`)
     }
 
-    if (resp.statusCode === 302) {
+    if (resp.statusCode === 302 || resp.statusCode === 303) {
         if (!ua.noFollowIf?.(resp)) {
             // transparent redirect
             return await navigate(ua, location ?? throw_("no redirect to follow"))
