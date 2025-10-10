@@ -93,11 +93,15 @@ async function navigate(ua, url, undici_params) {
     return { cookies: ua.cookieJar?.[url.origin], location, body, $ }
 }
 
-async function form_post(ua, $) {
-    return await navigate(ua, $("form").attr('action'), { method: 'POST', headers: {
+async function form_post_(ua, $form) {
+    return await navigate(ua, $form.attr('action'), { method: 'POST', headers: {
 		'Content-type': 'application/x-www-form-urlencoded',
         'Accept': 'text/html',
-	}, body: $("form").serialize() })
+	}, body: $form.serialize() })
 }
 
-module.exports = { new_navigate_until_service, navigate_until_service, add_cookie, add_cookie_on_prev_url, navigate, form_post, $first }
+async function form_post(ua, $) {
+    return await form_post_(ua, $("form"))
+}
+
+module.exports = { new_navigate_until_service, navigate_until_service, add_cookie, add_cookie_on_prev_url, navigate, form_post_, form_post, $first }
