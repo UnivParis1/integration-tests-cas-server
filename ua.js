@@ -23,6 +23,12 @@ const new_navigate_until_service = (service) => (
     { noFollowIf: resp => resp.headers.location.startsWith(service) }    
 )
 
+// we keep cookieJar from previous navigation
+const navigate_until_service = (ua, service) => {
+    Object.assign(ua, new_navigate_until_service(service))
+    return ua
+}
+
 function add_cookie(ua, url, name, value) {
     ((ua.cookieJar ??= {})[new URL(url).origin] ??= {})[name] = value
     return ua
@@ -94,4 +100,4 @@ async function form_post(ua, $) {
 	}, body: $("form").serialize() })
 }
 
-module.exports = { new_navigate_until_service, add_cookie, add_cookie_on_prev_url, navigate, form_post, $first }
+module.exports = { new_navigate_until_service, navigate_until_service, add_cookie, add_cookie_on_prev_url, navigate, form_post, $first }
