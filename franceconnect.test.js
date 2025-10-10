@@ -11,6 +11,10 @@ const fc_users = {
     birthday_different: 'avec_nom_dusage',
 }
 
+async function cleanup() {
+    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user, {})
+}
+
 async function login_using_fc(ua, service, fc_user) {
     const cas_url = cas.login_url(service)
 
@@ -105,7 +109,7 @@ test('login with user_for_fc', async () => {
 })
 
 test('FranceConnect login => no exact match => LDAP login => different birthday error', async () => {
-    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+    await cleanup()
 
     const service = conf.test_services.p3
     let ua = new_navigate_until_service(service)
@@ -114,7 +118,7 @@ test('FranceConnect login => no exact match => LDAP login => different birthday 
 })
 
 test('FranceConnect login => no exact match => LDAP login => ajout supannFCSub', async () => {
-    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+    await cleanup()
     
     const service = conf.test_services.p3
     let ua = new_navigate_until_service(service)
@@ -128,8 +132,7 @@ test('FranceConnect login => no exact match => LDAP login => ajout supannFCSub',
 })
 
 test('FranceConnect login => exact match => ajout supannFCSub + logout', async () => {
-    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
-
+    await cleanup()
     const service = conf.test_services.p3
     
     let ua = new_navigate_until_service(service)
@@ -158,7 +161,7 @@ test('FranceConnect login => exact match => ajout supannFCSub + logout', async (
 }, 10/*seconds*/ * 1000)
 
 test('need double auth: FranceConnect login => exact match => ajout supannFCSub', async () => {
-    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+    await cleanup()
 
     const service = conf.test_services.FC_double_auth
     
@@ -174,7 +177,7 @@ test('need double auth: FranceConnect login => exact match => ajout supannFCSub'
 }, 10/*seconds*/ * 1000)
 
 test('need double auth: FranceConnect login => exact match => mais utilisateur LDAP différent', async () => {
-    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+    await cleanup()
 
     const service = conf.test_services.FC_double_auth
     
@@ -191,7 +194,7 @@ test('need double auth: FranceConnect login => exact match => mais utilisateur L
 }, 10/*seconds*/ * 1000)
 
 test('need double auth: FranceConnect login => no exact match => ajout supannFCSub', async () => {
-    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+    await cleanup()
 
     const service = conf.test_services.FC_double_auth
     
@@ -207,7 +210,7 @@ test('need double auth: FranceConnect login => no exact match => ajout supannFCS
 }, 10/*seconds*/ * 1000)
 
 test('FranceConnect login => no attrs serviceValidate', async () => {
-    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user)
+    await cleanup()
 
     const service = conf.test_services.p2
     
