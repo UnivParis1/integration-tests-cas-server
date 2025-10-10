@@ -7,7 +7,7 @@ const test_without_jest = (name, cb) => cb()
 
 test_without_jest('tgt_lifetime', async () => {
     const try_after = async (rememberMe, delay, how_many_times) => {
-        const { tgc } = await cas.get_tgc_and_ticket_using_form_post(conf.test_services.p2, conf.user, rememberMe)
+        const { tgc } = await cas.get_tgc_and_ticket_using_form_post(conf.test_services.p2, conf.user, { rememberMe })
         for (let i = 0; i < how_many_times; i++) {
             await helpers.waitHours(delay)
             console.log('test_tgt_lifetime with tgc', tgc, 'and rememberMe', rememberMe, 'round #' + i, ': delay', delay, 'hours', how_many_times)

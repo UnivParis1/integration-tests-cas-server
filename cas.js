@@ -70,15 +70,15 @@ async function login_form_post_(ua, response, user, rememberMe) {
     return await form_post(ua, $)
 }
 
-async function login_form_post(service, user, rememberMe, params) {
+async function login_form_post(service, user, opts) {
     const ua = new_navigate_until_service(service)
     const url = login_url(service)
-    const response = await navigate(ua, url, params)
-    return await login_form_post_(ua, response, user, rememberMe)
+    const response = await navigate(ua, url, opts.undici_params)
+    return await login_form_post_(ua, response, user, opts.rememberMe)
 }
 
-async function get_tgc_and_ticket_using_form_post(service, user, rememberMe) {
-    const response = await login_form_post(service, user, rememberMe)
+async function get_tgc_and_ticket_using_form_post(service, user, opts = {}) {
+    const response = await login_form_post(service, user, opts)
     const tgc = response.cookies?.[tgc_name()]
     const ticket = await get_ticket_from_response_location(response)
     return { tgc, ticket }
