@@ -27,9 +27,21 @@ test.concurrent('login_page', async () => {
 
 test.concurrent('logout redirect', async () => {
     const url = `${conf.cas_base_url}/logout?service=${encodeURIComponent(conf.test_services.p2)}`
-    const response = await undici.request(url)
-    expect(response.statusCode).toBe(302)
-    expect(response.headers.location).toBe('https://idp-test.univ-paris1.fr/idp/profile/Logout')
+    let response = await undici.request(url)
+    if (response.statusCode === 302 && response.headers.location === `${conf.cas_base_url}/logout`) {
+        // first a redirect to remove service (forcé dans la conf apache2)
+        response = await undici.request(response.headers.location)
+    }
+    const idp_logout_url = 'https://idp-test.univ-paris1.fr/idp/profile/Logout'
+    if (response.statusCode === 200) {
+        // Apereo CAS répond HTTP 200. On veut faire la req vers CAS et garder les cookies de la réponse + forcer idp/profile/Logout redirect
+        // Mais Apache2 ne permet pas de transformer un HTTP 200 en 302 + Location.
+        // Solution : on fait un http-equiv dans le HTML de la réponse :
+        expect(await response.body.text()).toContain(`<meta http-equiv='refresh' content='0; url=${idp_logout_url}' >`)
+    } else {
+        expect(response.statusCode).toBe(302)
+        expect(response.headers.location).toBe(idp_logout_url)
+    }
 })
 
 test.concurrent('login_with_mail', async () => {
