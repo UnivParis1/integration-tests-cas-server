@@ -3,7 +3,7 @@ const helpers = require('./helpers');
 const backChannelServer = require('./backChannelServer');
 const conf = require('./conf');
 const { throw_ } = require('./helpers')
-const { navigate, new_navigate_until_service, form_post } = require('./ua')
+const { navigate, new_navigate_until_service, form_post, navigate_until_service } = require('./ua')
 
 const flavor_to_tgc_name = {
     apereo_cas: 'TGC',
@@ -88,6 +88,11 @@ async function get_ticket_using_form_post(service, user) {
     return (await get_tgc_and_ticket_using_form_post(service, user)).ticket
 }
 
+async function get_ticket_using_ua_cookies(service, ua) {
+    const response = await navigate(navigate_until_service(ua, service), login_url(service))
+    return await get_ticket_from_response_location(response)
+}
+
 async function get_ticket_using_TGT(service, tgc) {
     const response = await navigate(new_navigate_until_service(service), login_url(service), {
         headers: { cookie: `${tgc_name()}=${tgc}` },
@@ -165,7 +170,7 @@ module.exports = {
     kinit, login_using_kerberos, get_ticket_using_kerberos, 
     get_tgc_and_ticket_using_form_post,
     may_get_ticket_using_TGT_cas_gateway,
-    get_ticket_using_TGT,
+    get_ticket_using_TGT, get_ticket_using_ua_cookies,
 
     p2_serviceValidate, p3_serviceValidate, samlValidate, 
 
