@@ -2,7 +2,7 @@ const cheerio = require('cheerio');
 const conf = require('./conf');
 const undici = require('undici')
 const { throw_ } = require('./helpers')
-const { form_post, navigate, add_cookie_on_prev_url, $first, new_navigate_until_service } = require('./ua')
+const { form_post, form_post_, navigate, $first, new_navigate_until_service } = require('./ua')
 const cas = require('./cas')
 
 const fc_users = {
@@ -28,11 +28,10 @@ async function login_using_fc(ua, service, fc_user, opts = {}) {
         to_fc_url = (fc_button_or_a.attr('redirecturl') || fc_button_or_a.attr('href')) ?? throw_("expected #FranceConnect in " + cas_login.body)
     }
     const fc_wayf = await navigate(ua, to_fc_url)
-    expect(fc_wayf.body).toContain(`Connexion - choix du compte`)
+    expect(fc_wayf.body).toContain(`Connexion - Choix du compte`)
 
-    // add cookie added in JS
-    add_cookie_on_prev_url(ua, 'fiName', '%7B%22name%22%3A%22identity-provider-example-faible%22%2C%22remember%22%3Afalse%7D')
-    const idp_interaction = await navigate(ua, '/call?provider=identity-provider-example-faible&storeFI=1')
+    // on choisit le 1er fournisseur d'identité : « Démonstration eIDAS faible »
+    const idp_interaction = await form_post_(ua, $first(fc_wayf, "form"))
     $first(idp_interaction, '[name=login]').val(fc_user)
     $first(idp_interaction, '[name=password]').val('123')
     const fc_authorize = await form_post(ua, idp_interaction.$)
@@ -150,11 +149,14 @@ test('FranceConnect login => exact match => ajout supannFCSub + logout', async (
 
     // Avec le même ua, on teste maintenant le logout
     const cas_logout_url = `${conf.cas_base_url}/logout?service=${encodeURIComponent(conf.test_services.p2)}`
-    const idp_logout = await navigate(ua, cas_logout_url)
+    let idp_logout = await navigate(ua, cas_logout_url)
     // FranceConnect FORM-POST redirect
+    expect(idp_logout.body).toContain("disconnect-from-idp")
+    idp_logout = await form_post(ua, idp_logout.$) // auto submit en JS
     expect(idp_logout.body).toContain("op.logoutForm")
-    idp_logout.$("form").append("<input name='logout' value='yes'>") // fait en Javascript...
-    await form_post(ua, idp_logout.$)
+    idp_logout = await form_post(ua, idp_logout.$)
+    expect(idp_logout.body).toContain("op.logoutForm")
+    idp_logout = await form_post(ua, idp_logout.$)
 
     expect(""+ua.prevUrl).toBe("https://cas-test.univ-paris1.fr/cas/logout?state=terminateState")
 
