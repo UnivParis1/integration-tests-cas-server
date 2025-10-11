@@ -6,7 +6,7 @@ const conf = require('./conf');
 test('throttle', async () => {
     const invalid_login = async (password) => {
         try {
-            await cas.login_form_post(conf.test_services.p2, { login: conf.user.login, password }, false, { headers: { 'User-Agent': 'Kerberos' } })
+            await cas.login_form_post(conf.test_services.p2, { login: conf.user.login, password }, { undici_params: { headers: { 'User-Agent': 'Kerberos' } } })
             throw "login should have failed"
         } catch (e) {
             return e
