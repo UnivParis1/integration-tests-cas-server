@@ -8,7 +8,7 @@ const cas = require('./cas')
 const fc_users = {
     exact_match: 'sans_nom_dusage',
     same_birthday: 'test',
-    birthday_different: 'avec_nom_dusage',
+    birthday_different: 'moins_18_ans',
 }
 
 async function cleanup() {
