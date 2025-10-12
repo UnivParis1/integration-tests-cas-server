@@ -90,7 +90,7 @@ async function navigate(ua, url, undici_params) {
     }
     const body = await resp.body.text()
     const $ = resp.headers['content-type']?.startsWith('text/html') ? cheerio.load(body) : undefined
-    return { cookies: ua.cookieJar?.[url.origin], location, body, $ }
+    return { cookies: ua.cookieJar?.[url.origin], location, body, $, status: resp.statusCode }
 }
 
 async function form_post_(ua, $form) {
