@@ -8,7 +8,7 @@ const { navigate, add_cookie, form_post } = require('./ua')
 test.concurrent('login_page', async () => {
     const url = cas.login_url(conf.test_services.p2)
     let ua = {}
-    let resp = await navigate(ua, url, { headers: { 'accept-language': 'fr' }})
+    let resp = await navigate(ua, url)
     
     if (conf.flavor === 'keycloak') {
         if (resp.body.includes('Kerberos Unsupported')) {
@@ -22,6 +22,21 @@ test.concurrent('login_page', async () => {
     } else {
         expect(resp.body).toContain('<span>Connexion Paris 1</span>')
         expect(resp.body).toContain('<span>Connexion via FranceConnect :</span>')
+    }
+})
+
+test.concurrent('login_page english', async () => {
+    const url = cas.login_url(conf.test_services.p2)
+    let ua = {}
+    let resp = await navigate(ua, url, { headers: { 'accept-language': 'en' }})
+    
+    if (conf.flavor === 'keycloak') {
+        throw "TODO"
+    } else if (conf.flavor === 'lemonldap') {
+        throw "TODO"
+    } else {
+        expect(resp.body_tags).toContain('<span>Paris 1 login</span>')
+        expect(resp.body_tags).toContain('<span>Login via FranceConnect:</span>')
     }
 })
 
