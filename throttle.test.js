@@ -6,7 +6,7 @@ const conf = require('./conf');
 test('throttle', async () => {
     const invalid_login = async (password) => {
         try {
-            return await cas.login_form_post(conf.test_services.p2, { login: conf.user.login, password }, { undici_params: { headers: { 
+            return await cas.login_form_post(conf.test_services.no_attrs, { login: conf.user.login, password }, { undici_params: { headers: { 
                 // test with "Kerberos" user-agent which triggers a bug in Apereo CAS 7.1
                 'User-Agent': 'Kerberos',
             } } })
@@ -33,7 +33,7 @@ test('throttle', async () => {
 
     //console.log("waiting to be allowed again")
     await helpers.waitSeconds(3)
-    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.serviceValidate, conf.test_services.p2, conf.user)
+    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.serviceValidate, conf.test_services.no_attrs, conf.user)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 }, 10/*seconds*/ * 1000)
 

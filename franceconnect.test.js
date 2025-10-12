@@ -109,7 +109,7 @@ async function forced_login_using_fc_and_ldap(ua, service, fc_user, ldap_user) {
     return await cas.login_form_post_(ua, cas_login_ldap, ldap_user || conf.user_for_fc, false)
 }
 
-async function check_p3_ticket_validation(service, location, lastLoginIsFranceConnect) {
+async function check_ticket_validation(service, location, lastLoginIsFranceConnect) {
     expect(location).toContain(`ticket=`)
     const ticket = cas.get_ticket_from_location(location)
     const xml = await cas.serviceValidate(service, ticket)
@@ -142,14 +142,14 @@ async function check_no_attrs_ticket_validation(service, location, lastLoginIsFr
 
 // simple test to ensure conf.user_for_fc is valid
 test('login with user_for_fc', async () => {
-    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.serviceValidate, conf.test_services.p2, conf.user_for_fc)
+    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.serviceValidate, conf.test_services.no_attrs, conf.user_for_fc)
     expect(xml).toContain(`<cas:user>${conf.user_for_fc.login}</cas:user>`)
 })
 
 test('FranceConnect login => no exact match => LDAP login => different birthday error', async () => {
     await cleanup()
 
-    const service = conf.test_services.p3
+    const service = conf.test_services.with_attrs
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc_and_ldap(ua, service, fc_users.birthday_different)
     expect(resp.body).toContain(`date de naissance provenant de France Connect ne correspond pas à l'utilisateur`)
@@ -158,33 +158,33 @@ test('FranceConnect login => no exact match => LDAP login => different birthday 
 test('FranceConnect login => no exact match => LDAP login => ajout supannFCSub', async () => {
     await cleanup()
     
-    const service = conf.test_services.p3
+    const service = conf.test_services.with_attrs
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc_and_ldap(ua, service, fc_users.same_birthday)
-    await check_p3_ticket_validation(service, resp.location, false)
+    await check_ticket_validation(service, resp.location, false)
 
     // On ré-essaye maintenant que le compte a un supannFCSub. On n'a plus besoin de se logger sur LDAP
     ua = new_navigate_until_service(service)
     const resp2 = await login_using_fc(ua, service, fc_users.same_birthday)
-    await check_p3_ticket_validation(service, resp2.location, true)
+    await check_ticket_validation(service, resp2.location, true)
 })
 
 test('FranceConnect login => exact match => ajout supannFCSub + logout', async () => {
     await cleanup()
-    const service = conf.test_services.p3
+    const service = conf.test_services.with_attrs
     
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc(ua, service, fc_users.exact_match)
     // => l'entrée LDAP a maintenant un supannFCSub
-    await check_p3_ticket_validation(service, resp.location, true)
+    await check_ticket_validation(service, resp.location, true)
    
     // On ré-essaye maintenant que le compte a un supannFCSub. Le résultat est le même, sauf qu'il n'y a pas eu besoin de "onlyFranceConnectSub" de interrupt.groovy
     ua = new_navigate_until_service(service)
     const resp2 = await login_using_fc(ua, service, fc_users.exact_match)
-    await check_p3_ticket_validation(service, resp2.location, true)
+    await check_ticket_validation(service, resp2.location, true)
 
     // Avec le même ua, on teste maintenant le logout
-    const cas_logout_url = `${conf.cas_base_url}/logout?service=${encodeURIComponent(conf.test_services.p2)}`
+    const cas_logout_url = `${conf.cas_base_url}/logout?service=${encodeURIComponent(conf.test_services.no_attrs)}`
     let idp_logout = await navigate(ua, cas_logout_url)
     // FranceConnect FORM-POST redirect
     expect(idp_logout.body).toContain("disconnect-from-idp")
@@ -198,7 +198,7 @@ test('FranceConnect login => exact match => ajout supannFCSub + logout', async (
 
     // Avec le même ua, on teste le relog qui doit nécessiter d'entrer le mot de passe FranceConnect à nouveau
     const resp3 = await login_using_fc(ua, service, fc_users.exact_match)
-    await check_p3_ticket_validation(service, resp3.location, true)
+    await check_ticket_validation(service, resp3.location, true)
 }, 10/*seconds*/ * 1000)
 
 test('need double auth: FranceConnect login => exact match => ajout supannFCSub', async () => {
@@ -208,12 +208,12 @@ test('need double auth: FranceConnect login => exact match => ajout supannFCSub'
     
     let ua = new_navigate_until_service(service)
     const resp = await forced_login_using_fc_and_ldap(ua, service, fc_users.exact_match)
-    await check_p3_ticket_validation(service, resp.location, false)
+    await check_ticket_validation(service, resp.location, false)
 
     // On ré-essaye maintenant que le compte a un supannFCSub. Le résultat est le même
     ua = new_navigate_until_service(service)
     const resp2 = await forced_login_using_fc_and_ldap(ua, service, fc_users.exact_match)
-    await check_p3_ticket_validation(service, resp2.location, false)
+    await check_ticket_validation(service, resp2.location, false)
     
 }, 10/*seconds*/ * 1000)
 
@@ -241,19 +241,19 @@ test('need double auth: FranceConnect login => no exact match => ajout supannFCS
     
     let ua = new_navigate_until_service(service)
     const resp = await forced_login_using_fc_and_ldap(ua, service, fc_users.same_birthday)
-    await check_p3_ticket_validation(service, resp.location, false)
+    await check_ticket_validation(service, resp.location, false)
 
     // On ré-essaye maintenant que le compte a un supannFCSub. Le résultat est le même
     ua = new_navigate_until_service(service)
     const resp2 = await forced_login_using_fc_and_ldap(ua, service, fc_users.same_birthday)
-    await check_p3_ticket_validation(service, resp2.location, false)
+    await check_ticket_validation(service, resp2.location, false)
     
 }, 10/*seconds*/ * 1000)
 
 test('FranceConnect login => no attrs serviceValidate', async () => {
     await cleanup()
 
-    const service = conf.test_services.p2
+    const service = conf.test_services.no_attrs
     
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc(ua, service, fc_users.exact_match)

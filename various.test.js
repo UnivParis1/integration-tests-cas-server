@@ -6,7 +6,7 @@ const undici = require('undici')
 const { navigate, add_cookie, form_post } = require('./ua')
 
 test.concurrent('login_page', async () => {
-    const url = cas.login_url(conf.test_services.p2)
+    const url = cas.login_url(conf.test_services.no_attrs)
     let ua = {}
     let resp = await navigate(ua, url)
     
@@ -26,7 +26,7 @@ test.concurrent('login_page', async () => {
 })
 
 test.concurrent('login_page english', async () => {
-    const url = cas.login_url(conf.test_services.p2)
+    const url = cas.login_url(conf.test_services.no_attrs)
     let ua = {}
     let resp = await navigate(ua, url, { headers: { 'accept-language': 'en' }})
     
@@ -41,7 +41,7 @@ test.concurrent('login_page english', async () => {
 })
 
 test.concurrent('logout redirect', async () => {
-    const url = `${conf.cas_base_url}/logout?service=${encodeURIComponent(conf.test_services.p2)}`
+    const url = `${conf.cas_base_url}/logout?service=${encodeURIComponent(conf.test_services.no_attrs)}`
     let response = await undici.request(url)
     if (response.statusCode === 302 && response.headers.location === `${conf.cas_base_url}/logout`) {
         // first a redirect to remove service (forcé dans la conf apache2)
@@ -60,7 +60,7 @@ test.concurrent('logout redirect', async () => {
 })
 
 test.concurrent('login_with_mail', async () => {
-    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.serviceValidate, conf.test_services.p2, { ...conf.user, login: conf.user.mail})
+    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.serviceValidate, conf.test_services.no_attrs, { ...conf.user, login: conf.user.mail})
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 })
 
@@ -144,13 +144,13 @@ test('single_logout (multiple tickets same service)', async () => {
     await expect(logoutRequest1).rejects.toContain('timeout waiting for single LogoutRequest')
 }, 2000)
 
-test.concurrent('no attrs serviceValidate with FORM post', () => test_the_different_ticket_validations.p2(cas.get_ticket_using_form_post))
-test.concurrent('p3/serviceValidate with FORM post', () => test_the_different_ticket_validations.p3(cas.get_ticket_using_form_post))
+test.concurrent('no attrs serviceValidate with FORM post', () => test_the_different_ticket_validations.no_attrs(cas.get_ticket_using_form_post))
+test.concurrent('with attrs serviceValidate with FORM post', () => test_the_different_ticket_validations.with_attrs(cas.get_ticket_using_form_post))
 if (conf.features.includes('samlValidate'))
 test.concurrent('samlValidate with FORM post', () => test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_form_post))
 
 test.concurrent('cas gateway', async () => {
-    const service = conf.test_services.p2
+    const service = conf.test_services.no_attrs
     const { tgc } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
     const ticket2 = await cas.get_ticket_using_TGT(service, tgc)
     expect(ticket2).toBeTruthy()
@@ -162,7 +162,7 @@ test.concurrent('cas gateway', async () => {
 
 // this test requires CAS != 6.x or cas.ticket.tgt.core.only-track-most-recent-session=false (cf https://github.com/apereo/cas/commit/901d8895f99dd72d72973a951cd2d8876c6ac6ff#diff-95999504a95c0f1fbf90a10b15622c50dd0d4ce8bc39877ba19a63e8f816d4a9R46 )
 test.concurrent('parallel tickets on same TGT & same base service', async () => {
-    const service = conf.test_services.p2
+    const service = conf.test_services.no_attrs
     const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
     const ticket2 = await cas.get_ticket_using_TGT(service + "?foo=2", tgc)
     const ticket3 = await cas.get_ticket_using_TGT(service + "?foo=3", tgc)
@@ -175,7 +175,7 @@ test.concurrent('parallel tickets on same TGT & same base service', async () => 
 })
 
 test.concurrent('ticket can be validated only once', async () => {
-    const service = conf.test_services.p2
+    const service = conf.test_services.no_attrs
     const ticket = await cas.get_ticket_using_form_post(service, conf.user)
     console.log(ticket)
     const xml = await cas.serviceValidate(service, ticket)

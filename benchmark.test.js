@@ -4,7 +4,7 @@ const conf = require('./conf');
 const one_to_n = (n) => Array.from({ length: n }).map((_, i) => 1+i)
 
 const one = async (nb_tickets) => {
-    const service = conf.test_services.p2
+    const service = conf.test_services.no_attrs
     const resp = await cas.login_form_post(service, conf.user, {})
     expect(resp.location).toBeTruthy()
 

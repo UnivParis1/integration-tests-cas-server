@@ -7,12 +7,12 @@ const test_without_jest = (name, cb) => cb()
 
 test_without_jest('tgt_lifetime', async () => {
     const try_after = async (rememberMe, delay, how_many_times) => {
-        const { tgc } = await cas.get_tgc_and_ticket_using_form_post(conf.test_services.p2, conf.user, { rememberMe })
+        const { tgc } = await cas.get_tgc_and_ticket_using_form_post(conf.test_services.no_attrs, conf.user, { rememberMe })
         for (let i = 0; i < how_many_times; i++) {
             await helpers.waitHours(delay)
             console.log('test_tgt_lifetime with tgc', tgc, 'and rememberMe', rememberMe, 'round #' + i, ': delay', delay, 'hours', how_many_times)
-            const ticket = await cas.get_ticket_using_TGT(conf.test_services.p2, tgc)
-            const xml = await cas.serviceValidate(conf.test_services.p2, ticket)
+            const ticket = await cas.get_ticket_using_TGT(conf.test_services.no_attrs, tgc)
+            const xml = await cas.serviceValidate(conf.test_services.no_attrs, ticket)
             console.log('test_tgt_lifetime with tgc', tgc, 'got ticket', ticket, xml)
             assert.match(xml, new RegExp(`<cas:user>${conf.user.login}</cas:user>`))
         }

@@ -9,8 +9,8 @@ module.exports = {
     features: ['proxy', 'single_logout', 'samlValidate'],
 
     test_services: {
-        p2: 'http://localhost/',
-        p3: 'http://localhost/',
+        no_attrs: 'http://localhost/',
+        with_attrs: 'http://localhost/',
         samlValidate: 'http://localhost/',
         proxy: ['http://localhost/', 'imap://localhost'],
     },
