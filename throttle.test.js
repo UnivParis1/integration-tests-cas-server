@@ -6,23 +6,29 @@ const conf = require('./conf');
 test('throttle', async () => {
     const invalid_login = async (password) => {
         try {
-            return await cas.login_form_post(conf.test_services.p2, { login: conf.user.login, password }, { undici_params: { headers: { 'User-Agent': 'Kerberos' } } })
+            return await cas.login_form_post(conf.test_services.p2, { login: conf.user.login, password }, { undici_params: { headers: { 
+                // test with "Kerberos" user-agent which triggers a bug in Apereo CAS 7.1
+                'User-Agent': 'Kerberos',
+            } } })
         } catch (e) {
             return e
         }
     }
     let err = await invalid_login('first')
     expect(err.status).toBe(401)
+    //expect(err.body).toContain(`likely due to invalid credentials`)
     expect(err.body).toContain(`Mauvais identifiant / mot de passe.`)
     await helpers.waitSeconds(2)
 
     err = await invalid_login('second')
     expect(err.status).toBe(423)
+    //expect(err.body).toContain(`You've entered the wrong password for the user too many times. You've been throttled`) // You've been throttled
     expect(err.body).toContain(`Vous avez saisi un mauvais mot de passe trop de fois de suite. Vous avez été rejeté.`) // You've been throttled
 
     // même avec le bon mot de passe, on a tjs une erreur :
     err = await invalid_login(conf.user.password)
     expect(err.status).toBe(423)
+    //expect(err.body).toContain(`You've entered the wrong password for the user too many times. You've been throttled`) // You've been throttled
     expect(err.body).toContain(`Vous avez saisi un mauvais mot de passe trop de fois de suite. Vous avez été rejeté.`) // You've been throttled
 
     //console.log("waiting to be allowed again")
