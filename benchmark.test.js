@@ -13,7 +13,7 @@ const one = async (nb_tickets) => {
     console.log('tgc', tgc)
     for (const i of one_to_n(nb_tickets)) {
         const ticket = await cas.get_ticket_using_TGT(service, tgc)
-        const xml = await cas.p2_serviceValidate(service, ticket)
+        const xml = await cas.serviceValidate(service, ticket)
         expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
     }
 }

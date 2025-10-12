@@ -8,7 +8,7 @@ test('st_lifetime', async () => {
         //console.log('test_st_lifetime: got ticket', ticket, '. waiting', delay, 'to validate it')
         await helpers.waitSeconds(delay)
         //console.log('test_st_lifetime: validating ticket', ticket)
-        return await cas.p2_serviceValidate(conf.test_services.p2, ticket)
+        return await cas.serviceValidate(conf.test_services.p2, ticket)
     }
     const timeToLive = 10 /*seconds*/ // cas.ticket.ServiceTicket.timeToLive
     return await Promise.all([ 

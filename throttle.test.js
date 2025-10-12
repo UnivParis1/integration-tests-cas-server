@@ -28,7 +28,7 @@ test('throttle', async () => {
 
     //console.log("waiting to be allowed again")
     await helpers.waitSeconds(3)
-    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.p2_serviceValidate, conf.test_services.p2, conf.user)
+    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.serviceValidate, conf.test_services.p2, conf.user)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 }, 10/*seconds*/ * 1000)
 

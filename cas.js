@@ -131,13 +131,11 @@ async function get_ticket_using_kerberos(service, _user) {
     return headers_and_html.match(/^Location: .*[&?]ticket=([^&\s]*)$/mi)?.[1]
 }
 
-async function _serviceValidate(service, ticket, opts) {
-    let url = `${conf.cas_base_url_internal}${opts?.p3 ? '/p3' : ''}/serviceValidate?service=${encodeURIComponent(service)}&ticket=${ticket}`
+async function serviceValidate(service, ticket, opts = {}) {
+    let url = `${conf.cas_base_url_internal}/serviceValidate?service=${encodeURIComponent(service)}&ticket=${ticket}`
     if (opts.pgtUrl) url += '&pgtUrl=' + encodeURIComponent(opts.pgtUrl)
     return (await navigate({}, url)).body
 }
-const p2_serviceValidate = (service, ticket) => _serviceValidate(service, ticket, {})
-const p3_serviceValidate = (service, ticket) => _serviceValidate(service, ticket, { p3: true })
 
 async function samlValidate(service, ticket) {
     const url = `${conf.cas_base_url_internal}/samlValidate?TARGET=${encodeURIComponent(service)}`
@@ -159,7 +157,7 @@ async function get_ticket_and_validate(get_ticket, validate, service, user) {
 
 async function get_pgt(service, user) {
     const ticket = await get_ticket_using_form_post(service, user)
-    const xml = await _serviceValidate(service, ticket, { pgtUrl: `${conf.backChannelServer.frontalUrl}//pgtCallback` })
+    const xml = await serviceValidate(service, ticket, { pgtUrl: `${conf.backChannelServer.frontalUrl}//pgtCallback` })
     const pgtIou = xml.match(/<cas:proxyGrantingTicket>([^<]*)/)?.[1] ?? throw_("missing <cas:proxyGrantingTicket> in " + xml)
     return helpers.get_delete(backChannelServer.state.pgtIou_to_pgt, pgtIou) ?? throw_("unknown pgtIou " + pgtIou)
 }
@@ -172,7 +170,7 @@ module.exports = {
     may_get_ticket_using_TGT_cas_gateway,
     get_ticket_using_TGT, get_ticket_using_ua_cookies,
 
-    p2_serviceValidate, p3_serviceValidate, samlValidate, 
+    serviceValidate, samlValidate, 
 
     get_pgt,
     get_ticket_and_validate,

@@ -76,7 +76,7 @@ async function forced_login_using_fc_and_ldap(ua, service, fc_user, ldap_user) {
 async function check_p3_ticket_validation(service, location, lastLoginIsFranceConnect) {
     expect(location).toContain(`ticket=`)
     const ticket = cas.get_ticket_from_location(location)
-    const xml = await cas.p3_serviceValidate(service, ticket)
+    const xml = await cas.serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>pldupont</cas:user>`)
     expect(xml).toContain(`<cas:uid>pldupont</cas:uid>`)
     expect(xml).toContain(`<cas:givenName>Paul Louis</cas:givenName>`)
@@ -94,7 +94,7 @@ async function check_p3_ticket_validation(service, location, lastLoginIsFranceCo
 async function check_no_attrs_ticket_validation(service, location, lastLoginIsFranceConnect, with_attrs) {
     expect(location).toContain(`ticket=`)
     const ticket = cas.get_ticket_from_location(location)
-    const xml = await cas.p2_serviceValidate(service, ticket)
+    const xml = await cas.serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>pldupont</cas:user>`)
 
     if (lastLoginIsFranceConnect) {
@@ -106,7 +106,7 @@ async function check_no_attrs_ticket_validation(service, location, lastLoginIsFr
 
 // simple test to ensure conf.user_for_fc is valid
 test('login with user_for_fc', async () => {
-    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.p2_serviceValidate, conf.test_services.p2, conf.user_for_fc)
+    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.serviceValidate, conf.test_services.p2, conf.user_for_fc)
     expect(xml).toContain(`<cas:user>${conf.user_for_fc.login}</cas:user>`)
 })
 

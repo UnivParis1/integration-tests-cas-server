@@ -45,14 +45,14 @@ test.concurrent('logout redirect', async () => {
 })
 
 test.concurrent('login_with_mail', async () => {
-    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.p2_serviceValidate, conf.test_services.p2, { ...conf.user, login: conf.user.mail})
+    const xml = await cas.get_ticket_and_validate(cas.get_ticket_using_form_post, cas.serviceValidate, conf.test_services.p2, { ...conf.user, login: conf.user.mail})
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 })
 
 test.concurrent('logout removes TGC', async () => {
     const service = `${conf.backChannelServer.frontalUrl}/app1`
     const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
-    const xml = await cas.p2_serviceValidate(service, ticket)
+    const xml = await cas.serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     await undici.request(`${conf.cas_base_url}/logout`, {
@@ -69,7 +69,7 @@ if (conf.features.includes('single_logout'))
 test('single_logout', async () => {
     const service = `${conf.backChannelServer.frontalUrl}/app1`
     const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
-    const xml = await cas.p2_serviceValidate(service, ticket)
+    const xml = await cas.serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     backChannelServer.start_if_not_running()
@@ -90,11 +90,11 @@ test('single_logout (multiple services)', async () => {
     const service  = `${conf.backChannelServer.frontalUrl}/app1`
     const service2 = `${conf.backChannelServer.frontalUrl}/app2`
     const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
-    const xml = await cas.p2_serviceValidate(service, ticket)
+    const xml = await cas.serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     const ticket2 = await cas.get_ticket_using_TGT(service2, tgc)
-    const xml2 = await cas.p2_serviceValidate(service2, ticket2)
+    const xml2 = await cas.serviceValidate(service2, ticket2)
     expect(xml2).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     backChannelServer.start_if_not_running()
@@ -111,11 +111,11 @@ if (conf.features.includes('single_logout'))
 test('single_logout (multiple tickets same service)', async () => {
     const service = `${conf.backChannelServer.frontalUrl}/app1`
     const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
-    const xml = await cas.p2_serviceValidate(service, ticket)
+    const xml = await cas.serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     const ticket2 = await cas.get_ticket_using_TGT(service, tgc)
-    const xml2 = await cas.p2_serviceValidate(service, ticket2)
+    const xml2 = await cas.serviceValidate(service, ticket2)
     expect(xml2).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 
     backChannelServer.start_if_not_running()
@@ -141,7 +141,7 @@ test.concurrent('cas gateway', async () => {
     expect(ticket2).toBeTruthy()
     const ticket3 = await cas.may_get_ticket_using_TGT_cas_gateway(service, "invalid")
     expect(ticket3).toBeFalsy()
-    const xml2 = await cas.p2_serviceValidate(service, ticket2)
+    const xml2 = await cas.serviceValidate(service, ticket2)
     expect(xml2).toContain(`<cas:user>${conf.user.login}</cas:user>`)
 })
 
@@ -151,9 +151,9 @@ test.concurrent('parallel tickets on same TGT & same base service', async () => 
     const { tgc, ticket } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user)
     const ticket2 = await cas.get_ticket_using_TGT(service + "?foo=2", tgc)
     const ticket3 = await cas.get_ticket_using_TGT(service + "?foo=3", tgc)
-    const xml2 = await cas.p2_serviceValidate(service + "?foo=2", ticket2)
-    const xml1 = await cas.p2_serviceValidate(service, ticket)
-    const xml3 = await cas.p2_serviceValidate(service + "?foo=3", ticket3)
+    const xml2 = await cas.serviceValidate(service + "?foo=2", ticket2)
+    const xml1 = await cas.serviceValidate(service, ticket)
+    const xml3 = await cas.serviceValidate(service + "?foo=3", ticket3)
     for (const xml of [xml1, xml2, xml3]) {
         expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
     }
@@ -163,9 +163,9 @@ test.concurrent('ticket can be validated only once', async () => {
     const service = conf.test_services.p2
     const ticket = await cas.get_ticket_using_form_post(service, conf.user)
     console.log(ticket)
-    const xml = await cas.p2_serviceValidate(service, ticket)
+    const xml = await cas.serviceValidate(service, ticket)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
-    const err = await cas.p2_serviceValidate(service, ticket).catch(err => err.body) // KEYCLOAK returns HTTP 400, handle it as 200
+    const err = await cas.serviceValidate(service, ticket).catch(err => err.body) // KEYCLOAK returns HTTP 400, handle it as 200
     expect(err).toContain(`<cas:authenticationFailure code="INVALID_TICKET">`)
 })
 

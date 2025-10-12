@@ -2,13 +2,13 @@ const cas = require('./cas');
 const conf = require('./conf');
 
 async function p2(get_ticket) {
-    const xml = await cas.get_ticket_and_validate(get_ticket, cas.p2_serviceValidate, conf.test_services.p2, conf.user)
+    const xml = await cas.get_ticket_and_validate(get_ticket, cas.serviceValidate, conf.test_services.p2, conf.user)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
     expect(xml).not.toContain('<cas:uid>') // `p2 serviceValidate should not include attrs`
     expect(xml).not.toContain('<cas:mail>') // `p2 serviceValidate should not include attrs`
 }
 async function p3(get_ticket) {
-    const xml = await cas.get_ticket_and_validate(get_ticket, cas.p3_serviceValidate, conf.test_services.p3, conf.user)
+    const xml = await cas.get_ticket_and_validate(get_ticket, cas.serviceValidate, conf.test_services.p3, conf.user)
     expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
     expect(xml).toContain(`<cas:uid>${conf.user.login}</cas:uid>`)
     expect(xml).toContain(`<cas:mail>${conf.user.mail}</cas:mail>`)

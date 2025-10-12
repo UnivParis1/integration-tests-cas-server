@@ -12,7 +12,7 @@ test_without_jest('tgt_lifetime', async () => {
             await helpers.waitHours(delay)
             console.log('test_tgt_lifetime with tgc', tgc, 'and rememberMe', rememberMe, 'round #' + i, ': delay', delay, 'hours', how_many_times)
             const ticket = await cas.get_ticket_using_TGT(conf.test_services.p2, tgc)
-            const xml = await cas.p2_serviceValidate(conf.test_services.p2, ticket)
+            const xml = await cas.serviceValidate(conf.test_services.p2, ticket)
             console.log('test_tgt_lifetime with tgc', tgc, 'got ticket', ticket, xml)
             assert.match(xml, new RegExp(`<cas:user>${conf.user.login}</cas:user>`))
         }
