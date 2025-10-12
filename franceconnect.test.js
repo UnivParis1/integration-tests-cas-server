@@ -1,7 +1,7 @@
 const cheerio = require('cheerio');
 const conf = require('./conf');
 const undici = require('undici')
-const { throw_ } = require('./helpers')
+const { throw_, popen } = require('./helpers')
 const { form_post, form_post_, navigate, $first, new_navigate_until_service } = require('./ua')
 const cas = require('./cas')
 
@@ -11,8 +11,35 @@ const fc_users = {
     birthday_different: 'moins_18_ans',
 }
 
+const keycloak_conf = {
+    base_url: 'https://cas-test.univ-paris1.fr',
+}
+
+async function keycloak__get_admin_bearer() {
+    const json = await popen('', 'curl', [
+        '-s', 
+        '--data', 'client_id=admin-cli', '--data', 'username=a', '--data', 'password=a', '--data', 'grant_type=password',
+        `${keycloak_conf.base_url}/realms/master/protocol/openid-connect/token`,
+    ])
+    return JSON.parse(json).access_token
+}
+
+async function keycloak__remove_federated_identity(bearer, ldap_uid) {
+    await popen('', 'curl', [
+        '-s', 
+        '-XDELETE', '-H', `Authorization: Bearer ${bearer}`,
+        `${keycloak_conf.base_url}/admin/realms/master/users/f:ldap_p1:${ldap_uid}/federated-identity/FranceConnect`,
+    ])    
+}
+
 async function cleanup() {
-    await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user, {})
+    if (conf.flavor === 'apereo_cas') {
+        await cas.login_form_post('http://localhost/integration-tests-cas-server/cleanup', conf.user, {})
+    } else if (conf.flavor === 'keycloak') {
+        const bearer = await keycloak__get_admin_bearer()
+        await keycloak__remove_federated_identity(bearer, 'pldupont')
+        await keycloak__remove_federated_identity(bearer, 'e0109004862') // ???
+    }
 }
 
 async function login_using_fc(ua, service, fc_user, opts = {}) {
@@ -21,6 +48,15 @@ async function login_using_fc(ua, service, fc_user, opts = {}) {
     let to_fc_url;
     if (conf.flavor === 'lemonldap') {
         to_fc_url = `${cas_url}&idp=FranceConnect`// (fc_button_or_a.attr('redirecturl') || fc_button_or_a.attr('href')) ?? throw_("expected #FranceConnect in " + cas_login.body)
+    } else if (conf.flavor === 'keycloak') {
+        let cas_login = await navigate(ua, cas_url)
+        if (cas_login.body.includes('Kerberos Unsupported')) {
+            // keycloak has an intermediate form to handle optional Kerberos
+            cas_login = await form_post(ua, cas_login.$)
+        }
+        expect(cas_login.location).toBeFalsy()
+        const a = cas_login.$('#social-FranceConnect') // <a href> in 6.5, <button redirectUrl> in 6.6
+        to_fc_url = a.attr('href') ?? throw_("expected #social-FranceConnect in " + cas_login.body)
     } else {
         const cas_login = await navigate(ua, cas_url)
         expect(cas_login.location).toBeFalsy()
