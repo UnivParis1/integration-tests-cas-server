@@ -60,6 +60,9 @@ async function login_using_fc_and_ldap_(ua, service, fc_user) {
 
 async function login_using_fc_and_ldap(ua, service, fc_user) {
     const cas_login_ldap = await login_using_fc_and_ldap_(ua, service, fc_user)
+
+    expect(cas_login_ldap.body).toContain('Réconciliation d’identité')
+
     return await cas.login_form_post_(ua, cas_login_ldap, conf.user_for_fc, false)
 }
 
