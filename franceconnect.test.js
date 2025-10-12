@@ -156,7 +156,7 @@ test('FranceConnect login => exact match => ajout supannFCSub + logout', async (
     idp_logout.$("form").append("<input name='logout' value='yes'>") // fait en Javascript...
     await form_post(ua, idp_logout.$)
 
-    expect(""+ua.prevUrl).toBe("https://idp-test.univ-paris1.fr/idp/profile/Logout?state=terminateState")
+    expect(""+ua.prevUrl).toBe("https://cas-test.univ-paris1.fr/cas/logout?state=terminateState")
 
     // Avec le même ua, on teste le relog qui doit nécessiter d'entrer le mot de passe FranceConnect à nouveau
     const resp3 = await login_using_fc(ua, service, fc_users.exact_match)
