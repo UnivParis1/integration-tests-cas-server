@@ -144,10 +144,10 @@ test('single_logout (multiple tickets same service)', async () => {
     await expect(logoutRequest1).rejects.toContain('timeout waiting for single LogoutRequest')
 }, 2000)
 
-test.concurrent('no attrs serviceValidate with FORM post', () => test_the_different_ticket_validations.no_attrs(cas.get_ticket_using_form_post))
-test.concurrent('with attrs serviceValidate with FORM post', () => test_the_different_ticket_validations.with_attrs(cas.get_ticket_using_form_post))
+test.concurrent('no attrs serviceValidate with FORM post', async () => await test_the_different_ticket_validations.no_attrs(cas.get_ticket_using_form_post))
+test.concurrent('with attrs serviceValidate with FORM post', async () => await test_the_different_ticket_validations.with_attrs(cas.get_ticket_using_form_post))
 if (conf.features.includes('samlValidate'))
-test.concurrent('samlValidate with FORM post', () => test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_form_post))
+test.concurrent('samlValidate with FORM post', async () => await test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_form_post))
 
 test.concurrent('cas gateway', async () => {
     const service = conf.test_services.no_attrs

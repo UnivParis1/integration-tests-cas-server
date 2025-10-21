@@ -5,10 +5,10 @@ const fs = require('fs')
 
 beforeAll(cas.kinit)
 
-test.concurrent('no attrs serviceValidate with kerberos', () => test_the_different_ticket_validations.no_attrs(cas.get_ticket_using_kerberos))
-test.concurrent('p3/serviceValidate with kerberos', () => test_the_different_ticket_validations.with_attrs(cas.get_ticket_using_kerberos))
+test.concurrent('no attrs serviceValidate with kerberos', async () => await test_the_different_ticket_validations.no_attrs(cas.get_ticket_using_kerberos))
+test.concurrent('p3/serviceValidate with kerberos', async () => await test_the_different_ticket_validations.with_attrs(cas.get_ticket_using_kerberos))
 if (conf.features.includes('samlValidate'))
-test.concurrent('samlValidate with kerberos', () => test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_kerberos))
+test.concurrent('samlValidate with kerberos', async () => await test_the_different_ticket_validations.samlValidate(cas.get_ticket_using_kerberos))
 
 test.concurrent('no_kerberos_for_userAgents', async () => {
     const headers_and_html = await cas.login_using_kerberos(conf.test_services.no_attrs, 'Kerberos', false)
