@@ -13,7 +13,7 @@
     "undici": "^5.11.0"
   },
   "scripts": {
-    "test": "KRB5CCNAME=krb5cc_test jest franceconnect kerberos st_lifetime various && jest throttle"
+    "test": "jest api franceconnect st_lifetime various && KRB5CCNAME=krb5cc_test jest kerberos && jest throttle"
   },
   "author": "",
   "license": "Apache-2.0"

@@ -1,3 +1,5 @@
+const { popen } = require("./helpers");
+
 const cas_base_url = 'https://cas.univ.fr/cas'
 
 module.exports = {
@@ -35,5 +37,10 @@ module.exports = {
         port: 3000,
         // require: ssh -R 3000:localhost:3000 cas-test -N
         frontalUrl: 'https://cas-test.univ.fr/test-proxy',
+    },
+
+    api: {
+        cas_direct_url: 'http://localhost:8080/cas',
+        run_curl_cmd: (curl_cmd) => popen(curl_cmd, 'ssh', ['-o', 'PreferredAuthentications=gssapi-with-mic', 'cas-test', 'sh']),
     },
 };
