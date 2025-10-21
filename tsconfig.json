@@ -3,7 +3,7 @@
         "checkJs": true,
         "allowJs": true,
         "noEmit": true,
-        "types": ["jest"],
+        "types": ["vitest/globals"],
         "lib": ["ES2022", "dom"]
 
     }
