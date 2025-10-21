@@ -15,13 +15,13 @@ test.concurrent('login_page', async () => {
             // keycloak has an intermediate form to handle optional Kerberos
             resp = await form_post(ua, resp.$)
         }
-        expect(resp.body).toContain('>Connexion Paris 1</')
-        expect(resp.body).toContain('>FranceConnect</')
+        expect(resp.body_tags).toContain('>Connexion Paris 1</')
+        expect(resp.body_tags).toContain('>FranceConnect</')
     } else if (conf.flavor === 'lemonldap') {
         expect(resp.body).toContain('passwordfield')
     } else {
-        expect(resp.body).toContain('<span>Connexion Paris 1</span>')
-        expect(resp.body).toContain('<span>Connexion via FranceConnect :</span>')
+        expect(resp.body_tags).toContain('<span>Connexion Paris 1</span>')
+        expect(resp.body_tags).toContain('<span>Connexion via FranceConnect :</span>')
     }
 })
 

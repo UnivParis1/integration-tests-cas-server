@@ -96,7 +96,7 @@ async function login_using_fc_and_ldap_(ua, service, fc_user) {
 async function login_using_fc_and_ldap(ua, service, fc_user) {
     const cas_login_ldap = await login_using_fc_and_ldap_(ua, service, fc_user)
 
-    expect(cas_login_ldap.body).toContain('Réconciliation d’identité')
+    expect(cas_login_ldap.body_tags).toContain('Réconciliation d’identité')
 
     return await cas.login_form_post_(ua, cas_login_ldap, conf.user_for_fc, false)
 }
@@ -104,7 +104,7 @@ async function login_using_fc_and_ldap(ua, service, fc_user) {
 async function forced_login_using_fc_and_ldap(ua, service, fc_user, ldap_user) {
     const cas_login_ldap = await login_using_fc_and_ldap_(ua, service, fc_user)
 
-    expect(cas_login_ldap.body).toContain(`<p>Double authentification nécessaire pour la réinitialisation de vos facteurs d'authentification renforcée</p>`)   
+    expect(cas_login_ldap.body_tags).toContain(`<p>Double authentification nécessaire pour la réinitialisation de vos facteurs d'authentification renforcée</p>`)   
     
     return await cas.login_form_post_(ua, cas_login_ldap, ldap_user || conf.user_for_fc, false)
 }
@@ -152,7 +152,7 @@ test('FranceConnect login => no exact match => LDAP login => different birthday 
     const service = conf.test_services.with_attrs
     let ua = new_navigate_until_service(service)
     const resp = await login_using_fc_and_ldap(ua, service, fc_users.birthday_different)
-    expect(resp.body).toContain(`date de naissance provenant de France Connect ne correspond pas à l'utilisateur`)
+    expect(resp.body_tags).toContain(`date de naissance provenant de France Connect ne correspond pas à l'utilisateur`)
 })
 
 test('FranceConnect login => no exact match => LDAP login => ajout supannFCSub', async () => {
@@ -230,7 +230,7 @@ test('need double auth: FranceConnect login => exact match => mais utilisateur L
     ua = new_navigate_until_service(service)
     const resp2 = await forced_login_using_fc_and_ldap(ua, service, fc_users.exact_match, conf.user)
     
-    expect(resp2.body).toContain(`<p id="interruptMessage">Comptes différents</p>`)
+    expect(resp2.body_tags).toContain(`<p id="interruptMessage">Comptes différents</p>`)
     
 }, 10/*seconds*/ * 1000)
 
