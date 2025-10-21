@@ -4,7 +4,7 @@ Start by configuring conf.js, then:
 # first time:
 npm install
 
-npx jest various
+npm run test
 # or maybe
-npx jest --colors various 2>&1 | less -R
+npx vitest --ui
 ```
