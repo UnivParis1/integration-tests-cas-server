@@ -18,7 +18,7 @@ test('throttle', async () => {
     expect(err.status).toBe(401)
     //expect(err.body).toContain(`likely due to invalid credentials`)
     expect(err.body).toContain(`Mauvais identifiant / mot de passe.`)
-    await helpers.waitSeconds(2)
+    await helpers.waitSeconds(1)
 
     err = await invalid_login('second')
     expect(err.status).toBe(423)
