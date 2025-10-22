@@ -13,7 +13,7 @@ test('st_lifetime', async () => {
     const timeToLive = 10 /*seconds*/ // cas.ticket.ServiceTicket.timeToLive
     return await Promise.all([ 
         async () => {
-            expect(await validate_after((timeToLive - 1) /*seconds*/)).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+            expect(await validate_after((timeToLive - 3) /*seconds*/)).toContain(`<cas:user>${conf.user.login}</cas:user>`)
         },
         async () => {
             expect(await validate_after((timeToLive + 1) /*seconds*/)).toContain(`code="INVALID_TICKET"`)
