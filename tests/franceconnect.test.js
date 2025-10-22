@@ -1,9 +1,9 @@
 const cheerio = require('cheerio');
-const conf = require('./conf');
+const conf = require('../conf');
 const undici = require('undici')
-const { throw_, popen } = require('./helpers')
-const { form_post, form_post_, navigate, $first, new_navigate_until_service } = require('./ua')
-const cas = require('./cas')
+const { throw_, popen } = require('../lib/helpers')
+const { form_post, form_post_, navigate, $first, new_navigate_until_service } = require('../lib/ua')
+const cas = require('../lib/cas')
 
 const fc_users = {
     exact_match: 'sans_nom_dusage',

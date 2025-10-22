@@ -1,6 +1,6 @@
-const test_the_different_ticket_validations = require('./test_the_different_ticket_validations');
-const cas = require('./cas');
-const conf = require('./conf');
+const test_the_different_ticket_validations = require('../lib/test_the_different_ticket_validations');
+const cas = require('../lib/cas');
+const conf = require('../conf');
 const fs = require('fs')
 
 beforeAll(cas.kinit)

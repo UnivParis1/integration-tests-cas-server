@@ -1,7 +1,7 @@
 const assert = require('assert')
-const helpers = require('./helpers');
+const helpers = require('../lib/helpers');
 const cas = require('./cas');
-const conf = require('./conf');
+const conf = require('../conf');
 
 const test_without_jest = (name, cb) => cb()
 

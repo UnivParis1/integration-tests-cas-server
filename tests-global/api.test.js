@@ -1,7 +1,7 @@
-const cas = require('./cas');
-const conf = require('./conf');
-const { navigate, navigate_until_service } = require('./ua');
-const { popen } = require('./helpers');
+const cas = require('../lib/cas');
+const conf = require('../conf');
+const { navigate, navigate_until_service } = require('../lib/ua');
+const { popen } = require('../lib/helpers');
 
 test.concurrent('API logout', async () => {
     const service = conf.test_services.no_attrs

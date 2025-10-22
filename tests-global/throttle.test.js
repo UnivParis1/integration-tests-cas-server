@@ -1,6 +1,6 @@
-const helpers = require('./helpers');
-const cas = require('./cas');
-const conf = require('./conf');
+const helpers = require('../lib/helpers');
+const cas = require('../lib/cas');
+const conf = require('../conf');
 
 // can NOT be done in parallel with other tests!!
 test('throttle', async () => {

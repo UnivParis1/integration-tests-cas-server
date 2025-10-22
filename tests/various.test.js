@@ -1,9 +1,9 @@
-const backChannelServer = require('./backChannelServer');
-const test_the_different_ticket_validations = require('./test_the_different_ticket_validations');
-const cas = require('./cas');
-const conf = require('./conf');
+const backChannelServer = require('../lib/backChannelServer');
+const test_the_different_ticket_validations = require('../lib/test_the_different_ticket_validations');
+const cas = require('../lib/cas');
+const conf = require('../conf');
 const undici = require('undici')
-const { navigate, add_cookie, form_post } = require('./ua')
+const { navigate, add_cookie, form_post } = require('../lib/ua')
 
 test.concurrent('login_page', async () => {
     const url = cas.login_url(conf.test_services.no_attrs)

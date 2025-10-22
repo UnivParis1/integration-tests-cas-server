@@ -1,5 +1,5 @@
-const cas = require('./cas');
-const conf = require('./conf');
+const cas = require('../lib/cas');
+const conf = require('../conf');
 
 const one_to_n = (n) => Array.from({ length: n }).map((_, i) => 1+i)
 

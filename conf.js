@@ -1,4 +1,4 @@
-const { popen } = require("./helpers");
+const { popen } = require("./lib/helpers");
 
 const cas_base_url = 'https://cas.univ.fr/cas'
 

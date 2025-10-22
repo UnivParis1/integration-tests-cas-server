@@ -1,6 +1,6 @@
-const helpers = require('./helpers');
-const cas = require('./cas');
-const conf = require('./conf');
+const helpers = require('../lib/helpers');
+const cas = require('../lib/cas');
+const conf = require('../conf');
 
 test('st_lifetime', async () => {
     const validate_after = async (delay) => {
