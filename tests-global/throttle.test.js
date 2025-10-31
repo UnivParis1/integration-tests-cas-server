@@ -6,7 +6,7 @@ const conf = require('../conf');
 test('throttle', async () => {
     const invalid_login = async (password) => {
         try {
-            return await cas.login_form_post(conf.test_services.no_attrs, { login: conf.user.login, password }, { undici_params: { headers: { 
+            return await cas.login_form_post(conf.test_services.no_attrs, { login: conf.user.login, password }, { ua: { alwaysHeaders: { 
                 // test with "Kerberos" user-agent which triggers a bug in Apereo CAS 7.1
                 'User-Agent': 'Kerberos',
             } } })
