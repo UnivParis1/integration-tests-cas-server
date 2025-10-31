@@ -15,6 +15,7 @@ test('throttle', async () => {
         }
     }
     let err = await invalid_login('first')
+    expect(err.error).toBeUndefined()
     expect(err.status).toBe(401)
     //expect(err.body).toContain(`likely due to invalid credentials`)
     expect(err.body).toContain(`Mauvais identifiant / mot de passe.`)
