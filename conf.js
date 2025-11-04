@@ -43,4 +43,10 @@ module.exports = {
         cas_direct_url: 'http://localhost:8080/cas',
         run_curl_cmd: (curl_cmd) => popen(curl_cmd, 'ssh', ['-o', 'PreferredAuthentications=gssapi-with-mic', 'cas-test', 'sh']),
     },
+
+    previous_cas: {
+        cas_base_url: '', // 'https://cas-prod.univ.fr/cas'
+        run_mongosh_cmd_old: (mongo_script) => popen(mongo_script, 'ssh', ['-o', 'PreferredAuthentications=gssapi-with-mic', 'cas-prev',      'bash', '-c', `'mongosh --file <(cat -) cas'`]),
+        run_mongosh_cmd:     (mongo_script) => popen(mongo_script, 'ssh', ['-o', 'PreferredAuthentications=gssapi-with-mic', 'cas-test', 'bash', '-c', `'mongosh --file <(cat -) cas'`]),
+    },
 };

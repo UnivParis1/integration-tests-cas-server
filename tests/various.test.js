@@ -204,6 +204,26 @@ test.concurrent('proxy ticket', async () => {
     await test_proxy_ticket(...conf.test_services.proxy)
 })
 
+if (conf.previous_cas?.cas_base_url)
+test.concurrent('mongo ticket registry TGT entry from previous version compatibility with new version', async () => {
+    const service = conf.test_services.no_attrs
+    const { tgc } = await cas.get_tgc_and_ticket_using_form_post(service, conf.user, { cas_base_url: conf.previous_cas.cas_base_url, rememberMe: true })
+
+    const exported_tgt = await conf.previous_cas.run_mongosh_cmd_old(`o = db.ticketGrantingTicketsCollection.findOne({ ticketId: "${tgc}" }); delete o._id; printjson(o)`)
+    expect(exported_tgt).toContain(tgc)
+
+    const tgc_new = `TGT-XX-${Date.now()}`
+    const exported_tgt_ = exported_tgt.replaceAll(tgc, tgc_new)
+
+    const resp = await conf.previous_cas.run_mongosh_cmd(`db.ticketGrantingTicketsCollection.insertOne(${exported_tgt_})`)
+    expect(resp).toBe('')
+
+    const ticket = await cas.get_ticket_using_TGT(service, tgc_new)
+    const xml = await cas.serviceValidate(service, ticket)
+    expect(xml).toContain(`<cas:user>${conf.user.login}</cas:user>`)
+})
+
+
 afterAll(() => {
     backChannelServer.stop_if_running()
 })
