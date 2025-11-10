@@ -169,6 +169,32 @@ test('FranceConnect login => no exact match => LDAP login => ajout supannFCSub',
     await check_ticket_validation(service, resp2.location, true)
 })
 
+test('FranceConnect login => no exact match => bouton « Annuler »', async () => {
+    await cleanup()
+    
+    const service = conf.test_services.with_attrs
+    let ua = new_navigate_until_service(service)
+    const resp = await login_using_fc_need_ldap(ua, service, fc_users.same_birthday)
+    expect(resp.body_tags).toContain('Réconciliation d’identité')
+    expect($first(resp, '[name=cancel]').attr('onclick')).toBe("location.href = '/cas/logout'")
+    let logout = await navigate(ua, `${conf.cas_base_url}/logout`)
+
+    // FranceConnect FORM-POST redirect
+    expect(logout.body).toContain("disconnect-from-idp")
+    logout = await form_post(ua, logout.$) // auto submit en JS
+    expect(logout.body).toContain("op.logoutForm")
+    logout = await form_post(ua, logout.$)
+    expect(logout.body).toContain("op.logoutForm")
+    logout = await form_post(ua, logout.$)
+
+    // CAS répond HTTP 302 en boucle, mais la conf apache2 force un redirect final
+    expect(""+ua.prevUrl).toBe("https://idp-test.univ-paris1.fr/idp/profile/Logout")
+
+    // Avec le même ua, on teste le relog qui doit nécessiter d'entrer le mot de passe FranceConnect à nouveau
+    const resp3 = await login_using_fc_need_ldap(ua, service, fc_users.same_birthday)
+    expect(resp3.body_tags).toContain('Réconciliation d’identité')
+})
+
 test('FranceConnect login => exact match => ajout supannFCSub + logout', async () => {
     await cleanup()
     const service = conf.test_services.with_attrs
@@ -194,7 +220,9 @@ test('FranceConnect login => exact match => ajout supannFCSub + logout', async (
     expect(idp_logout.body).toContain("op.logoutForm")
     idp_logout = await form_post(ua, idp_logout.$)
 
+    // CAS répond HTTP 200, mais la conf apache2 ajoute un redirect
     expect(""+ua.prevUrl).toBe("https://cas-test.univ-paris1.fr/cas/logout?state=terminateState")
+    expect(idp_logout.body).toContain(`<meta http-equiv='refresh' content='0; url=https://idp-test.univ-paris1.fr/idp/profile/Logout' >`)
 
     // Avec le même ua, on teste le relog qui doit nécessiter d'entrer le mot de passe FranceConnect à nouveau
     const resp3 = await login_using_fc(ua, service, fc_users.exact_match)
